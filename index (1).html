@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Mon Padlet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ═══════════════════════════════════════════
+       VARIABLES & RESET
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg: #f7f3ec;
+      --ink: #1a1510;
+      --ink2: #6b5f50;
+      --border: rgba(26,21,16,0.1);
+      --card-bg: #ffffff;
+      --accent: #c8402a;
+      --accent2: #2a6bc8;
+      --header-bg: #1a1510;
+      --col-header: #1a1510;
+      --shadow: 0 2px 14px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+      --radius: 14px;
+      --font-display: 'Fraunces', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { width: 100%; min-height: 100vh; overflow-x: hidden; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--ink);
+      transition: background 0.4s ease;
+    }
+
+    /* ═══════════════════════════════════════════
+       SPLASH SCREEN
+       ➜ Modifie SPLASH_TITLE, SPLASH_SUBTITLE, SPLASH_BODY dans le JS
+    ═══════════════════════════════════════════ */
+    #splash {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      background: #1a1510;
+      padding: 24px;
+    }
+    #splash::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(200,64,42,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(42,107,200,0.12) 0%, transparent 60%);
+    }
+    .splash-inner {
+      position: relative;
+      max-width: 560px; width: 100%;
+      text-align: center;
+      animation: splashIn 0.8s cubic-bezier(0.34,1.2,0.64,1) both;
+    }
+    @keyframes splashIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .splash-icon {
+      font-size: 3.2rem;
+      margin-bottom: 20px;
+      display: block;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .splash-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 7vw, 3.4rem);
+      font-weight: 900;
+      color: #f7f3ec;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+    .splash-subtitle {
+      font-size: clamp(0.95rem, 3vw, 1.1rem);
+      color: rgba(247,243,236,0.6);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .splash-body {
+      font-size: clamp(0.82rem, 2.5vw, 0.92rem);
+      color: rgba(247,243,236,0.38);
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+    .splash-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent);
+      border: none; border-radius: 50px;
+      color: #fff; font-family: var(--font-display);
+      font-size: 1.05rem; font-weight: 700;
+      padding: 16px 40px; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 24px rgba(200,64,42,0.4);
+      letter-spacing: 0.02em;
+    }
+    .splash-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,64,42,0.5); }
+    .splash-btn:active { transform: scale(0.97); }
+    .splash-divider {
+      width: 60px; height: 2px;
+      background: rgba(247,243,236,0.15);
+      margin: 28px auto;
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════ */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--header-bg);
+      height: 56px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem; font-weight: 700;
+      color: #f7f3ec;
+      flex: 1;
+      background: transparent; border: none; outline: none;
+      cursor: text;
+      min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .header-title:focus {
+      background: rgba(255,255,255,0.08);
+      border-radius: 6px; padding: 2px 8px;
+    }
+    .hbtn {
+      display: flex; align-items: center; gap: 5px;
+      border: none; border-radius: 8px;
+      font-family: var(--font-body); font-size: 0.78rem; font-weight: 600;
+      padding: 7px 12px; cursor: pointer;
+      transition: transform 0.12s, opacity 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hbtn:active { transform: scale(0.94); }
+    .hbtn-add    { background: var(--accent);  color: #fff; }
+    .hbtn-col    { background: rgba(255,255,255,0.1); color: #f7f3ec; border: 1px solid rgba(255,255,255,0.15); }
+    .hbtn-bg     { background: rgba(255,255,255,0.1); color: #f7f3ec; border: 1px solid rgba(255,255,255,0.15); font-size: 1rem; padding: 7px 10px; }
+    .hbtn:hover  { opacity: 0.85; }
+    .hbtn span.icon { font-size: 0.9rem; }
+
+    /* ═══════════════════════════════════════════
+       BOARD
+    ═══════════════════════════════════════════ */
+    .board {
+      display: flex;
+      gap: 16px;
+      padding: 20px 16px 100px;
+      min-height: calc(100vh - 56px);
+      overflow-x: auto;
+      align-items: flex-start;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ═══════════════════════════════════════════
+       COLUMN
+    ═══════════════════════════════════════════ */
+    .column {
+      flex: 0 0 280px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    @media (max-width: 480px) {
+      .column { flex: 0 0 calc(100vw - 48px); }
+      .board { padding: 16px 16px 100px; }
+    }
+    .col-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px;
+      background: var(--col-header);
+      border-radius: 10px;
+      position: sticky; top: 68px; z-index: 10;
+    }
+    .col-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .col-title {
+      font-family: var(--font-display);
+      font-size: 0.9rem; font-weight: 700;
+      color: #f7f3ec; flex: 1;
+      background: transparent; border: none; outline: none;
+      cursor: pointer; min-width: 0;
+    }
+    .col-title:focus { background: rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 5px; }
+    .col-count { font-size: 0.68rem; color: rgba(247,243,236,0.4); font-weight: 500; flex-shrink: 0; }
+    .col-del {
+      background: none; border: none;
+      color: rgba(247,243,236,0.25); cursor: pointer;
+      font-size: 1rem; padding: 2px 4px; line-height: 1;
+      transition: color 0.15s; flex-shrink: 0;
+    }
+    .col-del:hover { color: #ff6b6b; }
+
+    /* ═══════════════════════════════════════════
+       CARD
+    ═══════════════════════════════════════════ */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+      animation: cardIn 0.28s cubic-bezier(0.34,1.4,0.64,1) both;
+    }
+    @keyframes cardIn {
+      from { transform: scale(0.85) translateY(10px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+    .card-stripe {
+      height: 4px; width: 100%;
+    }
+    .card-body { padding: 12px 14px 10px; }
+
+    .card-type-label {
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 7px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .card-content-text {
+      font-size: 0.88rem; line-height: 1.6;
+      color: var(--ink); word-break: break-word; white-space: pre-wrap;
+    }
+    .card-link-title { font-size: 0.9rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .card-link-url {
+      display: inline-flex; align-items: center; gap: 4px;
+      color: var(--accent2); font-size: 0.78rem; text-decoration: none;
+      word-break: break-all; margin-top: 6px;
+    }
+    .card-link-url:hover { text-decoration: underline; }
+    .card-link-desc { font-size: 0.82rem; color: var(--ink2); margin-top: 4px; line-height: 1.5; }
+
+    .card audio, .card video {
+      width: 100%; border-radius: 8px; margin-top: 4px;
+      display: block;
+    }
+    .card-media-label { font-size: 0.78rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+    .card-media-note  { font-size: 0.72rem; color: var(--ink2); margin-top: 6px; }
+
+    .card-date { font-size: 0.65rem; color: rgba(26,21,16,0.3); margin-top: 10px; }
+
+    .card-actions {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; gap: 4px;
+      opacity: 0; transition: opacity 0.18s;
+    }
+    .card:hover .card-actions,
+    .card:focus-within .card-actions { opacity: 1; }
+    .cbtn {
+      background: rgba(247,243,236,0.9);
+      border: 1px solid rgba(26,21,16,0.1);
+      border-radius: 6px; padding: 4px 7px;
+      font-size: 0.72rem; cursor: pointer;
+      color: var(--ink2); transition: background 0.12s, color 0.12s;
+      backdrop-filter: blur(4px);
+    }
+    .cbtn:hover { background: var(--ink); color: #fff; }
+    .cbtn.del:hover { background: #e53e3e; color: #fff; }
+
+    /* Empty state */
+    .col-empty {
+      text-align: center; padding: 20px 10px;
+      font-size: 0.78rem; color: rgba(26,21,16,0.28);
+      font-style: italic;
+    }
+
+    /* Add card button */
+    .btn-add-card {
+      background: rgba(26,21,16,0.04);
+      border: 2px dashed rgba(26,21,16,0.13);
+      border-radius: var(--radius);
+      color: var(--ink2); font-family: var(--font-body);
+      font-size: 0.8rem; padding: 11px;
+      cursor: pointer; text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-add-card:hover { background: rgba(26,21,16,0.08); border-color: var(--ink); color: var(--ink); }
+
+    /* Add column button */
+    .btn-add-col {
+      flex: 0 0 260px; height: 46px; align-self: flex-start;
+      background: rgba(26,21,16,0.05);
+      border: 2px dashed rgba(26,21,16,0.15);
+      border-radius: 10px; color: var(--ink2);
+      font-family: var(--font-body); font-size: 0.82rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-add-col:hover { background: rgba(26,21,16,0.1); border-color: var(--ink); color: var(--ink); }
+
+    /* ═══════════════════════════════════════════
+       MODAL
+    ═══════════════════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(26,21,16,0.55);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 300;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 6px 0 0;
+      width: 100%; max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    }
+    @media (min-width: 600px) {
+      .overlay { align-items: center; padding: 20px; }
+      .modal { border-radius: 20px; max-height: 88vh; transform: scale(0.92) translateY(16px); transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1); }
+    }
+    .overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: rgba(26,21,16,0.12); border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    .modal-inner { padding: 0 22px 28px; }
+
+    .modal h2 {
+      font-family: var(--font-display);
+      font-size: 1.25rem; font-weight: 700;
+      color: var(--ink); margin-bottom: 18px;
+    }
+
+    /* Type tabs */
+    .type-tabs {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 7px; margin-bottom: 18px;
+    }
+    .type-tab {
+      padding: 8px 4px; border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: #f7f3ec; cursor: pointer;
+      font-family: var(--font-body); font-size: 0.72rem; font-weight: 600;
+      color: var(--ink2); text-align: center;
+      transition: all 0.15s;
+    }
+    .type-tab .tab-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+    .type-tab.active { border-width: 2px; font-weight: 700; }
+    .type-tab.t-msg.active   { background: #fff5f2; border-color: var(--accent); color: var(--accent); }
+    .type-tab.t-link.active  { background: #f0f6ff; border-color: var(--accent2); color: var(--accent2); }
+    .type-tab.t-audio.active { background: #f0fff5; border-color: #27ae60; color: #27ae60; }
+    .type-tab.t-video.active { background: #fdf5ff; border-color: #8e44ad; color: #8e44ad; }
+
+    /* Form fields */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink2); margin-bottom: 6px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: #f7f3ec; border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--ink);
+      font-family: var(--font-body); font-size: 0.9rem;
+      padding: 10px 13px; outline: none; resize: vertical;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent); background: #fff;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: rgba(26,21,16,0.28); }
+    .field-note { font-size: 0.72rem; color: var(--ink2); margin-top: 5px; line-height: 1.5; }
+
+    .modal-actions {
+      display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;
+    }
+    .btn-cancel {
+      background: #f0ece4; border: none; border-radius: 50px;
+      color: var(--ink2); font-family: var(--font-body);
+      font-size: 0.88rem; font-weight: 500; padding: 10px 20px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #e0dbd0; }
+    .btn-save {
+      background: var(--accent); border: none; border-radius: 50px;
+      color: #fff; font-family: var(--font-body);
+      font-size: 0.88rem; font-weight: 700; padding: 10px 26px;
+      cursor: pointer; transition: background 0.15s, transform 0.12s;
+    }
+    .btn-save:hover { background: #b03420; }
+    .btn-save:active { transform: scale(0.96); }
+
+    /* ═══════════════════════════════════════════
+       BACKGROUND PICKER MODAL
+    ═══════════════════════════════════════════ */
+    .bg-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-bottom: 18px;
+    }
+    .bg-swatch {
+      height: 70px; border-radius: 10px;
+      border: 2.5px solid transparent;
+      cursor: pointer; transition: transform 0.15s, border-color 0.15s;
+      position: relative; overflow: hidden;
+    }
+    .bg-swatch:hover { transform: scale(1.04); }
+    .bg-swatch.active { border-color: var(--accent); }
+    .bg-swatch span {
+      position: absolute; bottom: 5px; left: 0; right: 0;
+      text-align: center; font-size: 0.62rem; font-weight: 600;
+      color: rgba(255,255,255,0.9); text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .bg-custom-row {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
+    }
+    .bg-custom-row input[type=color] {
+      width: 46px; height: 46px; border: none;
+      border-radius: 10px; cursor: pointer; padding: 2px;
+      background: #f7f3ec; flex-shrink: 0;
+    }
+    .bg-custom-row input[type=text] {
+      flex: 1; background: #f7f3ec; border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--ink);
+      font-family: var(--font-body); font-size: 0.88rem;
+      padding: 10px 13px; outline: none;
+    }
+    .bg-custom-row input[type=text]:focus { border-color: var(--accent); }
+
+    /* ═══════════════════════════════════════════
+       STRIPE COLORS PER TYPE
+    ═══════════════════════════════════════════ */
+    .stripe-msg   { background: var(--accent); }
+    .stripe-link  { background: var(--accent2); }
+    .stripe-audio { background: #27ae60; }
+    .stripe-video { background: #8e44ad; }
+
+    .label-msg   { color: var(--accent); }
+    .label-link  { color: var(--accent2); }
+    .label-audio { color: #27ae60; }
+    .label-video { color: #8e44ad; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ SPLASH ═══════════ -->
+<div id="splash">
+  <div class="splash-inner">
+    <span class="splash-icon" id="splashIcon">📌</span>
+    <h1 class="splash-title" id="splashTitle">Bienvenue sur<br/>mon Padlet</h1>
+    <div class="splash-divider"></div>
+    <p class="splash-subtitle" id="splashSubtitle">Un espace pour partager et organiser facilement vos idées, liens, médias et messages.</p>
+    <p class="splash-body" id="splashBody">Créez des colonnes, ajoutez des cartes (messages, liens, audios, vidéos), personnalisez le fond et organisez votre contenu à votre façon.</p>
+    <button class="splash-btn" onclick="hideSplash()">
+      <span>Accéder au tableau</span> →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header>
+  <div contenteditable="true" class="header-title" id="boardTitle" spellcheck="false">Mon Padlet</div>
+  <button class="hbtn hbtn-add" onclick="openAddModal()"><span class="icon">＋</span> Carte</button>
+  <button class="hbtn hbtn-col" onclick="addColumn()"><span class="icon">⊞</span> <span class="hide-xs">Col.</span></button>
+  <button class="hbtn hbtn-bg" onclick="openBgModal()" title="Fond d'écran">🎨</button>
+</header>
+
+<!-- ═══════════ BOARD ═══════════ -->
+<div class="board" id="board"></div>
+
+<!-- ═══════════ ADD/EDIT CARD MODAL ═══════════ -->
+<div class="overlay" id="cardOverlay">
+  <div class="modal" id="cardModal">
+    <div class="modal-handle"></div>
+    <div class="modal-inner">
+      <h2 id="modalTitle">Nouvelle carte</h2>
+
+      <div class="type-tabs">
+        <div class="type-tab t-msg active" onclick="switchType('msg')">
+          <span class="tab-icon">✏️</span>Message
+        </div>
+        <div class="type-tab t-link" onclick="switchType('link')">
+          <span class="tab-icon">🔗</span>Lien
+        </div>
+        <div class="type-tab t-audio" onclick="switchType('audio')">
+          <span class="tab-icon">🎵</span>Audio
+        </div>
+        <div class="type-tab t-video" onclick="switchType('video')">
+          <span class="tab-icon">🎬</span>Vidéo
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Colonne</label>
+        <select id="colSelect"></select>
+      </div>
+
+      <!-- MESSAGE -->
+      <div id="fields-msg">
+        <div class="field">
+          <label>Message</label>
+          <textarea id="msgContent" rows="5" placeholder="Écris ton message ici..."></textarea>
+        </div>
+      </div>
+
+      <!-- LIEN -->
+      <div id="fields-link" style="display:none">
+        <div class="field">
+          <label>Titre</label>
+          <input type="text" id="linkTitle" placeholder="Titre du lien"/>
+        </div>
+        <div class="field">
+          <label>URL</label>
+          <input type="url" id="linkUrl" placeholder="https://..."/>
+        </div>
+        <div class="field">
+          <label>Description (optionnel)</label>
+          <textarea id="linkDesc" rows="2" placeholder="Courte description..."></textarea>
+        </div>
+      </div>
+
+      <!-- AUDIO -->
+      <div id="fields-audio" style="display:none">
+        <div class="field">
+          <label>Titre de l'audio</label>
+          <input type="text" id="audioTitle" placeholder="Ex : Ma chanson préférée"/>
+        </div>
+        <div class="field">
+          <label>URL du fichier audio ou SoundCloud</label>
+          <input type="url" id="audioUrl" placeholder="https://... (.mp3, .ogg, .wav)"/>
+          <div class="field-note">Formats supportés : MP3, OGG, WAV. Ou lien direct vers un fichier hébergé.</div>
+        </div>
+      </div>
+
+      <!-- VIDEO -->
+      <div id="fields-video" style="display:none">
+        <div class="field">
+          <label>Titre de la vidéo</label>
+          <input type="text" id="videoTitle" placeholder="Ex : Mon clip favori"/>
+        </div>
+        <div class="field">
+          <label>URL YouTube / Vimeo / fichier vidéo</label>
+          <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=... ou .mp4"/>
+          <div class="field-note">YouTube et Vimeo sont intégrés automatiquement. Fichiers MP4 aussi supportés.</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCardModal()">Annuler</button>
+        <button class="btn-save" onclick="saveCard()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ BACKGROUND MODAL ═══════════ -->
+<div class="overlay" id="bgOverlay">
+  <div class="modal" id="bgModal">
+    <div class="modal-handle"></div>
+    <div class="modal-inner">
+      <h2>🎨 Fond d'écran</h2>
+
+      <div class="bg-grid" id="bgGrid"></div>
+
+      <p style="font-size:0.72rem;color:var(--ink2);margin-bottom:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Couleur personnalisée</p>
+      <div class="bg-custom-row">
+        <input type="color" id="bgColorPicker" value="#f7f3ec" oninput="previewBgColor(this.value)"/>
+        <input type="text" id="bgColorHex" placeholder="#f7f3ec ou gradient css..." oninput="previewBgText(this.value)"/>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeBgModal()">Annuler</button>
+        <button class="btn-save" onclick="applyBg()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   ★ SPLASH — MODIFIE CES VALEURS POUR PERSONNALISER ★
+══════════════════════════════════════════════════════ */
+var SPLASH_ICON     = '📌';
+var SPLASH_TITLE    = 'Bienvenue sur<br/>mon Padlet';
+var SPLASH_SUBTITLE = 'Un espace pour partager et organiser facilement vos idées, liens, médias et messages.';
+var SPLASH_BODY     = 'Créez des colonnes, ajoutez des cartes (messages, liens, audios, vidéos), personnalisez le fond et organisez votre contenu à votre façon.';
+var SPLASH_SHOW     = true; // false = désactiver le splash
+
+/* ══════════════════════════════════════════════════════
+   ÉTAT
+══════════════════════════════════════════════════════ */
+var state = {
+  title:   'Mon Padlet',
+  bg:      '#f7f3ec',
+  columns: [],
+  cards:   []
+};
+
+var editingCardId = null;
+var currentType   = 'msg';
+var tempBg        = null;
+
+var COL_COLORS = ['#c8402a','#2a6bc8','#27ae60','#8e44ad','#e67e22','#16a085','#2c3e50','#c0392b'];
+var BG_PRESETS = [
+  { name: 'Parchemin',  bg: '#f7f3ec' },
+  { name: 'Nuit',       bg: '#12100e' },
+  { name: 'Ardoise',    bg: '#2c3e50' },
+  { name: 'Poudre',     bg: '#fce4d6' },
+  { name: 'Menthe',     bg: '#d5f0e6' },
+  { name: 'Lavande',    bg: '#e8e0f7' },
+  { name: 'Dégradé 1',  bg: 'linear-gradient(135deg,#f7f3ec 0%,#fce4d6 100%)' },
+  { name: 'Dégradé 2',  bg: 'linear-gradient(135deg,#d5f0e6 0%,#e8e0f7 100%)' },
+  { name: 'Dégradé 3',  bg: 'linear-gradient(135deg,#12100e 0%,#2c3e50 100%)' },
+];
+
+/* ══════════════════════════════════════════════════════
+   SPLASH
+══════════════════════════════════════════════════════ */
+(function initSplash() {
+  if (!SPLASH_SHOW) { document.getElementById('splash').style.display = 'none'; return; }
+  document.getElementById('splashIcon').textContent    = SPLASH_ICON;
+  document.getElementById('splashTitle').innerHTML     = SPLASH_TITLE;
+  document.getElementById('splashSubtitle').textContent = SPLASH_SUBTITLE;
+  document.getElementById('splashBody').textContent    = SPLASH_BODY;
+})();
+
+function hideSplash() {
+  var s = document.getElementById('splash');
+  s.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  s.style.opacity = '0';
+  s.style.transform = 'scale(1.04)';
+  setTimeout(function() { s.style.display = 'none'; }, 500);
+}
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════ */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function save() {
+  try { localStorage.setItem('padlet2_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function load() {
+  try {
+    var raw = localStorage.getItem('padlet2_state');
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+  if (!state.columns || !state.columns.length) initDefault();
+}
+
+function initDefault() {
+  state.columns = [
+    { id: uid(), title: '📌 À faire',   color: COL_COLORS[0] },
+    { id: uid(), title: '⚡ En cours',  color: COL_COLORS[1] },
+    { id: uid(), title: '✅ Terminé',   color: COL_COLORS[2] },
+  ];
+  state.cards = [];
+  state.bg    = '#f7f3ec';
+  save();
+}
+
+/* ══════════════════════════════════════════════════════
+   BACKGROUND
+══════════════════════════════════════════════════════ */
+function applyBackground(bg) {
+  state.bg = bg;
+  var isGradient = bg.includes('gradient') || bg.includes(' ');
+  document.body.style.background    = bg;
+  document.body.style.backgroundAttachment = 'fixed';
+  // Update card bg contrast if dark bg
+  var isDark = isDarkBg(bg);
+  document.documentElement.style.setProperty('--bg', isGradient ? 'transparent' : bg);
+}
+
+function isDarkBg(bg) {
+  if (bg.startsWith('#')) {
+    var r = parseInt(bg.slice(1,3),16), g = parseInt(bg.slice(3,5),16), b = parseInt(bg.slice(5,7),16);
+    return (r*299 + g*587 + b*114) / 1000 < 128;
+  }
+  return bg.includes('12100e') || bg.includes('2c3e50');
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════ */
+function render() {
+  var board = document.getElementById('board');
+  board.innerHTML = '';
+  applyBackground(state.bg || '#f7f3ec');
+  document.getElementById('boardTitle').textContent = state.title || 'Mon Padlet';
+
+  state.columns.forEach(function(col) {
+    var cards = state.cards.filter(function(c){ return c.colId === col.id; });
+    var colEl = document.createElement('div');
+    colEl.className = 'column';
+
+    // Header
+    var hdr = document.createElement('div');
+    hdr.className = 'col-header';
+    hdr.innerHTML =
+      '<div class="col-dot" style="background:' + col.color + '"></div>' +
+      '<input class="col-title" value="' + esc(col.title) + '" ' +
+        'onchange="renameCol(\'' + col.id + '\',this.value)" ' +
+        'onblur="renameCol(\'' + col.id + '\',this.value)"/>' +
+      '<span class="col-count">' + cards.length + '</span>' +
+      '<button class="col-del" onclick="deleteCol(\'' + col.id + '\')" title="Supprimer">×</button>';
+    colEl.appendChild(hdr);
+
+    // Empty
+    if (cards.length === 0) {
+      var emp = document.createElement('div');
+      emp.className = 'col-empty';
+      emp.textContent = 'Aucune carte';
+      colEl.appendChild(emp);
+    }
+
+    // Cards
+    cards.forEach(function(card) { colEl.appendChild(buildCard(card)); });
+
+    // Add btn
+    var addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-card';
+    addBtn.innerHTML = '＋ Ajouter';
+    addBtn.onclick = function() { openAddModal(col.id); };
+    colEl.appendChild(addBtn);
+
+    board.appendChild(colEl);
+  });
+
+  // Add column btn
+  var colBtn = document.createElement('button');
+  colBtn.className = 'btn-add-col';
+  colBtn.innerHTML = '⊞ Nouvelle colonne';
+  colBtn.onclick = addColumn;
+  board.appendChild(colBtn);
+}
+
+function buildCard(card) {
+  var el = document.createElement('div');
+  el.className = 'card';
+  el.dataset.id = card.id;
+  var date = new Date(card.createdAt).toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+  var inner = '<div class="card-stripe stripe-' + card.type + '"></div><div class="card-body">';
+
+  if (card.type === 'msg') {
+    inner += '<div class="card-type-label label-msg">✏️ Message</div>';
+    inner += '<div class="card-content-text">' + esc(card.content) + '</div>';
+  } else if (card.type === 'link') {
+    inner += '<div class="card-type-label label-link">🔗 Lien</div>';
+    if (card.title) inner += '<div class="card-link-title">' + esc(card.title) + '</div>';
+    if (card.desc)  inner += '<div class="card-link-desc">' + esc(card.desc) + '</div>';
+    inner += '<a class="card-link-url" href="' + esc(card.url) + '" target="_blank" rel="noopener">🌐 ' + esc(card.url) + '</a>';
+  } else if (card.type === 'audio') {
+    inner += '<div class="card-type-label label-audio">🎵 Audio</div>';
+    if (card.title) inner += '<div class="card-media-label">' + esc(card.title) + '</div>';
+    inner += '<audio controls preload="none"><source src="' + esc(card.url) + '">Navigateur non compatible.</audio>';
+  } else if (card.type === 'video') {
+    inner += '<div class="card-type-label label-video">🎬 Vidéo</div>';
+    if (card.title) inner += '<div class="card-media-label">' + esc(card.title) + '</div>';
+    var embedHtml = buildVideoEmbed(card.url);
+    inner += embedHtml;
+  }
+
+  inner += '<div class="card-date">' + date + '</div>';
+  inner += '</div>';
+
+  inner += '<div class="card-actions">' +
+    '<button class="cbtn" onclick="editCard(\'' + card.id + '\')">✏️</button>' +
+    '<button class="cbtn" onclick="moveCard(\'' + card.id + '\',-1)" title="←">←</button>' +
+    '<button class="cbtn" onclick="moveCard(\'' + card.id + '\',1)"  title="→">→</button>' +
+    '<button class="cbtn del" onclick="deleteCard(\'' + card.id + '\')">🗑</button>' +
+    '</div>';
+
+  el.innerHTML = inner;
+  return el;
+}
+
+function buildVideoEmbed(url) {
+  // YouTube
+  var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (ytMatch) {
+    return '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:4px">' +
+      '<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" ' +
+      'src="https://www.youtube.com/embed/' + ytMatch[1] + '" allowfullscreen loading="lazy"></iframe></div>';
+  }
+  // Vimeo
+  var vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) {
+    return '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:4px">' +
+      '<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" ' +
+      'src="https://player.vimeo.com/video/' + vmMatch[1] + '" allowfullscreen loading="lazy"></iframe></div>';
+  }
+  // Fichier vidéo direct
+  return '<video controls preload="none" style="border-radius:8px;margin-top:4px"><source src="' + esc(url) + '">Navigateur non compatible.</video>';
+}
+
+/* ══════════════════════════════════════════════════════
+   CARD MODAL
+══════════════════════════════════════════════════════ */
+function openAddModal(colId) {
+  editingCardId = null;
+  currentType = 'msg';
+  clearForm();
+  switchType('msg');
+  populateColSelect(colId);
+  document.getElementById('modalTitle').textContent = 'Nouvelle carte';
+  document.getElementById('cardOverlay').classList.add('open');
+  setTimeout(function() { document.getElementById('msgContent').focus(); }, 350);
+}
+
+function editCard(id) {
+  var card = state.cards.find(function(c){ return c.id === id; });
+  if (!card) return;
+  editingCardId = id;
+  clearForm();
+  switchType(card.type);
+  populateColSelect(card.colId);
+  document.getElementById('modalTitle').textContent = 'Modifier la carte';
+  if (card.type === 'msg')   { document.getElementById('msgContent').value = card.content || ''; }
+  if (card.type === 'link')  { document.getElementById('linkTitle').value = card.title||''; document.getElementById('linkUrl').value = card.url||''; document.getElementById('linkDesc').value = card.desc||''; }
+  if (card.type === 'audio') { document.getElementById('audioTitle').value = card.title||''; document.getElementById('audioUrl').value = card.url||''; }
+  if (card.type === 'video') { document.getElementById('videoTitle').value = card.title||''; document.getElementById('videoUrl').value = card.url||''; }
+  document.getElementById('cardOverlay').classList.add('open');
+}
+
+function closeCardModal() {
+  document.getElementById('cardOverlay').classList.remove('open');
+  editingCardId = null;
+}
+
+function switchType(t) {
+  currentType = t;
+  ['msg','link','audio','video'].forEach(function(tp) {
+    document.getElementById('fields-' + tp).style.display = (tp === t) ? '' : 'none';
+    var tab = document.querySelector('.type-tab.t-' + tp);
+    tab.classList.toggle('active', tp === t);
+  });
+}
+
+function clearForm() {
+  ['msgContent','linkTitle','linkUrl','linkDesc','audioTitle','audioUrl','videoTitle','videoUrl']
+    .forEach(function(id){ document.getElementById(id).value = ''; });
+}
+
+function populateColSelect(selectedId) {
+  var sel = document.getElementById('colSelect');
+  sel.innerHTML = '';
+  state.columns.forEach(function(col) {
+    var opt = document.createElement('option');
+    opt.value = col.id;
+    opt.textContent = col.title;
+    if (col.id === selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function saveCard() {
+  var colId = document.getElementById('colSelect').value;
+  if (!colId && state.columns.length) colId = state.columns[0].id;
+
+  var card = editingCardId
+    ? state.cards.find(function(c){ return c.id === editingCardId; })
+    : { id: uid(), colId: colId, type: currentType, createdAt: Date.now() };
+
+  if (!editingCardId) state.cards.unshift(card);
+  card.colId = colId;
+  card.type  = currentType;
+
+  if (currentType === 'msg') {
+    card.content = document.getElementById('msgContent').value.trim();
+    if (!card.content) { alert('Le message est vide !'); return; }
+  } else if (currentType === 'link') {
+    card.title = document.getElementById('linkTitle').value.trim();
+    card.url   = document.getElementById('linkUrl').value.trim();
+    card.desc  = document.getElementById('linkDesc').value.trim();
+    if (!card.url) { alert('L\'URL est vide !'); return; }
+  } else if (currentType === 'audio') {
+    card.title = document.getElementById('audioTitle').value.trim();
+    card.url   = document.getElementById('audioUrl').value.trim();
+    if (!card.url) { alert('L\'URL audio est vide !'); return; }
+  } else if (currentType === 'video') {
+    card.title = document.getElementById('videoTitle').value.trim();
+    card.url   = document.getElementById('videoUrl').value.trim();
+    if (!card.url) { alert('L\'URL vidéo est vide !'); return; }
+  }
+
+  save(); render(); closeCardModal();
+}
+
+/* ══════════════════════════════════════════════════════
+   COLUMN ACTIONS
+══════════════════════════════════════════════════════ */
+function addColumn() {
+  var title = prompt('Nom de la nouvelle colonne :');
+  if (!title || !title.trim()) return;
+  var color = COL_COLORS[state.columns.length % COL_COLORS.length];
+  state.columns.push({ id: uid(), title: title.trim(), color: color });
+  save(); render();
+}
+
+function renameCol(id, val) {
+  var col = state.columns.find(function(c){ return c.id === id; });
+  if (col) { col.title = val; save(); }
+}
+
+function deleteCol(id) {
+  var n = state.cards.filter(function(c){ return c.colId === id; }).length;
+  var msg = n > 0 ? 'Supprimer la colonne et ses ' + n + ' carte(s) ?' : 'Supprimer cette colonne ?';
+  if (!confirm(msg)) return;
+  state.columns = state.columns.filter(function(c){ return c.id !== id; });
+  state.cards   = state.cards.filter(function(c){ return c.colId !== id; });
+  save(); render();
+}
+
+function deleteCard(id) {
+  if (!confirm('Supprimer cette carte ?')) return;
+  state.cards = state.cards.filter(function(c){ return c.id !== id; });
+  save(); render();
+}
+
+function moveCard(id, dir) {
+  var card   = state.cards.find(function(c){ return c.id === id; });
+  if (!card) return;
+  var idx    = state.columns.findIndex(function(c){ return c.id === card.colId; });
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= state.columns.length) return;
+  card.colId = state.columns[newIdx].id;
+  save(); render();
+}
+
+/* ══════════════════════════════════════════════════════
+   BACKGROUND MODAL
+══════════════════════════════════════════════════════ */
+function openBgModal() {
+  tempBg = state.bg;
+  var grid = document.getElementById('bgGrid');
+  grid.innerHTML = '';
+  BG_PRESETS.forEach(function(p) {
+    var sw = document.createElement('div');
+    sw.className = 'bg-swatch' + (state.bg === p.bg ? ' active' : '');
+    sw.style.background = p.bg;
+    sw.innerHTML = '<span>' + p.name + '</span>';
+    sw.onclick = function() { tempBg = p.bg; document.body.style.background = p.bg; document.querySelectorAll('.bg-swatch').forEach(function(s){ s.classList.remove('active'); }); sw.classList.add('active'); };
+    grid.appendChild(sw);
+  });
+  document.getElementById('bgColorHex').value = '';
+  document.getElementById('bgColorPicker').value = state.bg.startsWith('#') ? state.bg : '#f7f3ec';
+  document.getElementById('bgOverlay').classList.add('open');
+}
+
+function closeBgModal() {
+  document.body.style.background = state.bg;
+  document.getElementById('bgOverlay').classList.remove('open');
+}
+
+function previewBgColor(val) {
+  tempBg = val;
+  document.body.style.background = val;
+  document.getElementById('bgColorHex').value = val;
+}
+
+function previewBgText(val) {
+  if (!val.trim()) return;
+  tempBg = val.trim();
+  document.body.style.background = val.trim();
+}
+
+function applyBg() {
+  state.bg = tempBg || state.bg;
+  save(); render();
+  document.getElementById('bgOverlay').classList.remove('open');
+}
+
+/* ══════════════════════════════════════════════════════
+   CLOSE MODALS
+══════════════════════════════════════════════════════ */
+document.getElementById('cardOverlay').addEventListener('click', function(e){ if(e.target===this) closeCardModal(); });
+document.getElementById('bgOverlay').addEventListener('click', function(e){ if(e.target===this) closeBgModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeCardModal(); closeBgModal(); } });
+
+/* ══════════════════════════════════════════════════════
+   TITLE EDIT
+══════════════════════════════════════════════════════ */
+document.getElementById('boardTitle').addEventListener('blur', function(){
+  state.title = this.textContent.trim() || 'Mon Padlet'; save();
+});
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+load();
+render();
+</script>
+</body>
+</html>
