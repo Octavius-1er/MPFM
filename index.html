@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jeux du jour 🎮</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --maths-color: #f7971e;
+      --francais-color: #56ccf2;
+      --culture-color: #6fcf97;
+      --logique-color: #bb6bd9;
+      --bg: #12112b;
+      --card: #1e1c40;
+      --text: #f0eeff;
+      --sub: #9b96c8;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.12; animation: blobMove 16s ease-in-out infinite alternate; }
+    .bg-blob:nth-child(1) { width:600px;height:600px;background:#7c3aed;top:-200px;left:-200px;animation-duration:18s; }
+    .bg-blob:nth-child(2) { width:500px;height:500px;background:#2563eb;bottom:-150px;right:-150px;animation-duration:13s; }
+    .bg-blob:nth-child(3) { width:350px;height:350px;background:#f59e0b;top:50%;left:50%;animation-duration:20s; }
+    @keyframes blobMove { from{transform:translate(0,0) scale(1);} to{transform:translate(50px,40px) scale(1.15);} }
+
+    #stage {
+      position: relative; z-index: 1;
+      width: 960px; max-width: 98vw;
+      height: 580px; max-height: 92vh;
+    }
+
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.45s, transform 0.45s;
+      transform: scale(0.97);
+    }
+    .screen.active { opacity: 1; pointer-events: all; transform: scale(1); }
+    .screen.exit-left  { transform: translateX(-60px) scale(0.95); opacity: 0; }
+    .screen.exit-right { transform: translateX(60px) scale(0.95); opacity: 0; }
+
+    /* ── MENU ── */
+    #screen-menu { gap: 32px; }
+
+    .menu-title { text-align: center; animation: fadeDown 0.7s both; }
+    .menu-title .eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--sub); margin-bottom: 10px; }
+    .menu-title h1 {
+      font-family: 'Baloo 2', cursive; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, #fff 20%, #c084fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .menu-title p { margin-top: 10px; color: var(--sub); font-size: 1rem; }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+
+    .subject-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; max-width: 620px; }
+
+    .subject-card {
+      background: var(--card); border: 2px solid rgba(255,255,255,0.07);
+      border-radius: 20px; padding: 24px 22px;
+      cursor: pointer; display: flex; align-items: center; gap: 16px;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      animation: cardUp 0.6s var(--d, 0s) cubic-bezier(.22,1,.36,1) both;
+    }
+    .subject-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 16px 40px rgba(0,0,0,0.45); border-color: var(--color); }
+    @keyframes cardUp { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
+
+    .subject-icon {
+      width: 56px; height: 56px; border-radius: 15px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+      background: color-mix(in srgb, var(--color) 22%, transparent); flex-shrink: 0;
+    }
+    .subject-info h2 { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 800; color: var(--color); }
+    .subject-info p { font-size: 0.78rem; color: var(--sub); margin-top: 3px; }
+    .subject-arrow { margin-left: auto; font-size: 1.3rem; opacity: 0.3; transition: opacity 0.2s, transform 0.2s; }
+    .subject-card:hover .subject-arrow { opacity: 1; transform: translateX(4px); }
+
+    /* ── SLIDES ── */
+    #screen-slides { padding: 0; justify-content: stretch; }
+
+    .slide-shell {
+      width: 100%; height: 100%;
+      background: var(--card); border-radius: 26px;
+      border: 2px solid rgba(255,255,255,0.07);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .slide-topbar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.07); border: none; color: var(--sub);
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem;
+      padding: 6px 14px; border-radius: 50px; cursor: pointer; transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+    .slide-subject-label { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; color: var(--active-color, #fff); }
+    .slide-counter { margin-left: auto; font-size: 0.8rem; color: var(--sub); font-weight: 700; }
+
+    .progress-bar { height: 3px; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+    .progress-fill { height: 100%; background: var(--active-color, #fff); transition: width 0.4s ease; }
+
+    .slide-viewport { flex: 1; position: relative; overflow: hidden; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 30px 48px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s, transform 0.4s;
+      transform: translateX(80px);
+    }
+    .slide.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+    .slide.prev   { transform: translateX(-80px); opacity: 0; }
+
+    /* Intro slide */
+    .slide-intro { gap: 14px; text-align: center; }
+    .slide-intro .big-emoji { font-size: 4.5rem; animation: pulse 2.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .slide-intro h2 { font-family: 'Baloo 2', cursive; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; }
+    .slide-intro .intro-desc { color: var(--sub); font-size: 0.97rem; max-width: 460px; line-height: 1.65; }
+    .start-btn {
+      margin-top: 8px; background: var(--active-color, #fff); color: #12112b;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem;
+      padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .start-btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+
+    /* Game slide */
+    .slide-game { gap: 0; }
+    .game-header { width: 100%; display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+    .game-icon-big {
+      width: 66px; height: 66px; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center; font-size: 2.3rem;
+      background: color-mix(in srgb, var(--active-color, #fff) 18%, transparent);
+      border: 2px solid color-mix(in srgb, var(--active-color, #fff) 28%, transparent);
+      flex-shrink: 0;
+    }
+    .game-header-info h3 { font-family: 'Baloo 2', cursive; font-size: 1.55rem; font-weight: 800; color: var(--active-color, #fff); }
+    .game-header-info .game-category { font-size: 0.78rem; color: var(--sub); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+
+    .game-desc-box {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+      padding: 16px 20px; color: var(--sub); font-size: 0.93rem;
+      line-height: 1.65; margin-bottom: 18px;
+    }
+
+    .game-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; width: 100%; }
+    .chip { background: rgba(255,255,255,0.07); font-size: 0.76rem; font-weight: 700; color: var(--sub); padding: 5px 12px; border-radius: 50px; }
+
+    .play-btn {
+      background: var(--active-color, #fff); color: #12112b;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.05rem;
+      padding: 13px 34px; border-radius: 50px; border: none; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .play-btn:hover { transform: scale(1.04) translateY(-2px); box-shadow: 0 12px 36px rgba(0,0,0,0.45); }
+
+    .slide-nav {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 14px 22px;
+      border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .nav-btn {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(255,255,255,0.07); border: none; color: #fff;
+      font-size: 1.15rem; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.16); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+    .nav-dots { display: flex; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.25s; }
+    .dot.active { width: 24px; border-radius: 4px; background: var(--active-color, #fff); }
+
+    @media (max-width: 640px) {
+      .subject-grid { grid-template-columns: 1fr; max-width: 320px; }
+      .slide { padding: 20px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+</div>
+
+<div id="stage">
+
+  <!-- MENU -->
+  <div class="screen active" id="screen-menu">
+    <div class="menu-title">
+      <div class="eyebrow">📅 Pendant l'absence du prof</div>
+      <h1>Choisis ta matière</h1>
+      <p>Clique sur une matière pour découvrir tes jeux du jour !</p>
+    </div>
+    <div class="subject-grid">
+      <div class="subject-card" style="--color:var(--maths-color);--d:0.1s" onclick="openSubject('maths')">
+        <div class="subject-icon" style="--color:var(--maths-color)">🔢</div>
+        <div class="subject-info"><h2>Maths</h2><p>2 jeux · Calcul & logique</p></div>
+        <span class="subject-arrow">›</span>
+      </div>
+      <div class="subject-card" style="--color:var(--francais-color);--d:0.2s" onclick="openSubject('francais')">
+        <div class="subject-icon" style="--color:var(--francais-color)">📖</div>
+        <div class="subject-info"><h2>Français</h2><p>2 jeux · Vocabulaire & ortho</p></div>
+        <span class="subject-arrow">›</span>
+      </div>
+      <div class="subject-card" style="--color:var(--culture-color);--d:0.3s" onclick="openSubject('culture')">
+        <div class="subject-icon" style="--color:var(--culture-color)">🌍</div>
+        <div class="subject-info"><h2>Culture générale</h2><p>2 jeux · Géo & histoire</p></div>
+        <span class="subject-arrow">›</span>
+      </div>
+      <div class="subject-card" style="--color:var(--logique-color);--d:0.4s" onclick="openSubject('logique')">
+        <div class="subject-icon" style="--color:var(--logique-color)">🧩</div>
+        <div class="subject-info"><h2>Logique</h2><p>2 jeux · Stratégie & réflexion</p></div>
+        <span class="subject-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDES -->
+  <div class="screen" id="screen-slides">
+    <div class="slide-shell">
+      <div class="slide-topbar">
+        <button class="back-btn" onclick="goBack()">← Retour</button>
+        <span class="slide-subject-label" id="subject-label"></span>
+        <span class="slide-counter" id="slide-counter"></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="slide-viewport" id="slide-viewport"></div>
+      <div class="slide-nav">
+        <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">‹</button>
+        <div class="nav-dots" id="nav-dots"></div>
+        <button class="nav-btn" id="btn-next" onclick="changeSlide(1)">›</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const subjects = {
+    maths: {
+      label: '🔢 Maths', color: '#f7971e',
+      intro: { emoji: '🔢', title: 'Mathématiques', desc: 'Entraîne ton cerveau avec des jeux de calcul et de logique numérique. Prêt à relever le défi ?' },
+      games: [
+        { emoji: '🎯', name: 'Mathador', category: 'Calcul mental', desc: 'Utilise les 4 opérations pour atteindre un nombre cible. Un vrai classique pour les champions du calcul ! Idéal en solo ou en défi avec un camarade.', chips: ['Calcul mental', 'Solo / Duo', 'Tous niveaux'], url: 'https://mathador.fr' },
+        { emoji: '🔣', name: 'Numix', category: 'Opérations & rapidité', desc: 'Des opérations mathématiques à résoudre en un temps limité. Plus tu es rapide, plus tu marques de points. Attention, ça va vite !', chips: ['Rapidité', 'Solo', 'Interactif'], url: 'https://www.numix.fr' }
+      ]
+    },
+    francais: {
+      label: '📖 Français', color: '#56ccf2',
+      intro: { emoji: '📖', title: 'Français', desc: 'Améliore ton vocabulaire, ton orthographe et ta maîtrise de la langue française en t\'amusant !' },
+      games: [
+        { emoji: '🔤', name: 'Sutom (Wordle FR)', category: 'Vocabulaire', desc: 'Trouve le mot mystère du jour en 6 tentatives. À chaque essai, les lettres se colorent pour t\'aider. Un casse-tête addictif !', chips: ['Vocabulaire', 'Solo', 'Un mot par jour'], url: 'https://sutom.nocle.fr' },
+        { emoji: '📝', name: 'Dictée du jour', category: 'Orthographe', desc: 'Entraîne-toi à l\'orthographe avec une dictée interactive. Tu peux réécouter les phrases autant de fois que tu veux. Parfait pour progresser !', chips: ['Orthographe', 'Solo', 'Audio'], url: 'https://www.orthodidacte.com/exercice/dictee/' }
+      ]
+    },
+    culture: {
+      label: '🌍 Culture générale', color: '#6fcf97',
+      intro: { emoji: '🌍', title: 'Culture générale', desc: 'Explore le monde, découvre des pays et teste tes connaissances. Le tour du monde t\'attend !' },
+      games: [
+        { emoji: '🗺️', name: 'Seterra', category: 'Géographie', desc: 'Apprends les pays, capitales, fleuves et drapeaux du monde entier avec des quiz rapides et visuels. Sauras-tu placer tous les pays sur la carte ?', chips: ['Géographie', 'Quiz', 'Monde entier'], url: 'https://www.seterra.com/fr/' },
+        { emoji: '❓', name: 'Quizz culture', category: 'Culture générale', desc: 'Des centaines de questions sur l\'histoire, les sciences et la géo. Joue seul ou défie tes camarades pour voir qui a la culture la plus large !', chips: ['Histoire', 'Sciences', 'Multi-thèmes'], url: 'https://www.quizz.biz/quizz-100.html' }
+      ]
+    },
+    logique: {
+      label: '🧩 Logique', color: '#bb6bd9',
+      intro: { emoji: '🧩', title: 'Logique & Stratégie', desc: 'Entraîne ta réflexion, ta mémoire et ta stratégie avec des puzzles et défis cognitifs stimulants !' },
+      games: [
+        { emoji: '♟️', name: 'Chess.com', category: 'Stratégie', desc: 'Joue aux échecs contre l\'ordinateur à ton niveau ou contre un camarade. Les échecs développent la concentration, la stratégie et la patience.', chips: ['Stratégie', 'Solo / Multi', 'Tous niveaux'], url: 'https://www.chess.com/fr/play/computer' },
+        { emoji: '🔲', name: '2048', category: 'Réflexion', desc: 'Fusionne des tuiles pour atteindre le chiffre 2048. Simple à comprendre, difficile à maîtriser. Combien de tours tiendras-tu avant d\'être bloqué ?', chips: ['Réflexion', 'Solo', 'Addictif'], url: 'https://play2048.co' }
+      ]
+    }
+  };
+
+  let currentSubject = null;
+  let currentSlide = 0;
+  let slides = [];
+
+  function openSubject(key) {
+    currentSubject = key;
+    currentSlide = 0;
+    const s = subjects[key];
+    document.documentElement.style.setProperty('--active-color', s.color);
+    document.getElementById('subject-label').textContent = s.label;
+    slides = [{ type: 'intro', data: s.intro }];
+    s.games.forEach((g, i) => slides.push({ type: 'game', data: g, index: i + 1, total: s.games.length }));
+    renderSlides();
+    transition('screen-menu', 'screen-slides', 'left');
+  }
+
+  function goBack() { transition('screen-slides', 'screen-menu', 'right'); }
+
+  function transition(fromId, toId, dir) {
+    const from = document.getElementById(fromId);
+    const to   = document.getElementById(toId);
+    from.classList.remove('active');
+    from.classList.add(dir === 'left' ? 'exit-left' : 'exit-right');
+    setTimeout(() => from.classList.remove('exit-left', 'exit-right'), 500);
+    to.classList.add('active');
+  }
+
+  function renderSlides() {
+    const viewport = document.getElementById('slide-viewport');
+    viewport.innerHTML = '';
+    slides.forEach((sl, i) => {
+      const div = document.createElement('div');
+      div.className = 'slide' + (i === 0 ? ' active' : '');
+      div.id = 'slide-' + i;
+      if (sl.type === 'intro') {
+        div.classList.add('slide-intro');
+        div.innerHTML = `
+          <div class="big-emoji">${sl.data.emoji}</div>
+          <h2>${sl.data.title}</h2>
+          <p class="intro-desc">${sl.data.desc}</p>
+          <button class="start-btn" onclick="changeSlide(1)">Voir les jeux →</button>`;
+      } else {
+        const g = sl.data;
+        div.classList.add('slide-game');
+        div.innerHTML = `
+          <div class="game-header">
+            <div class="game-icon-big">${g.emoji}</div>
+            <div class="game-header-info">
+              <div class="game-category">Jeu ${sl.index} sur ${sl.total}</div>
+              <h3>${g.name}</h3>
+            </div>
+          </div>
+          <div class="game-desc-box">${g.desc}</div>
+          <div class="game-chips">${g.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
+          <a class="play-btn" href="${g.url}" target="_blank">🎮 Jouer maintenant</a>`;
+      }
+      viewport.appendChild(div);
+    });
+    updateNav();
+  }
+
+  function changeSlide(dir) {
+    const prev = currentSlide;
+    currentSlide = Math.max(0, Math.min(slides.length - 1, currentSlide + dir));
+    if (prev === currentSlide) return;
+    const prevEl = document.getElementById('slide-' + prev);
+    const nextEl = document.getElementById('slide-' + currentSlide);
+    prevEl.classList.remove('active');
+    if (dir > 0) prevEl.classList.add('prev');
+    setTimeout(() => prevEl.classList.remove('prev'), 450);
+    nextEl.style.transform = dir > 0 ? 'translateX(80px)' : 'translateX(-80px)';
+    nextEl.style.opacity = '0';
+    nextEl.offsetHeight;
+    nextEl.style.transform = '';
+    nextEl.style.opacity = '';
+    nextEl.classList.add('active');
+    updateNav();
+  }
+
+  function goToSlide(i) {
+    const dir = i > currentSlide ? 1 : -1;
+    while (currentSlide !== i) changeSlide(dir);
+  }
+
+  function updateNav() {
+    const total = slides.length;
+    document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${total}`;
+    document.getElementById('btn-prev').disabled = currentSlide === 0;
+    document.getElementById('btn-next').disabled = currentSlide === total - 1;
+    document.getElementById('progress-fill').style.width = ((currentSlide + 1) / total * 100) + '%';
+    const dotsEl = document.getElementById('nav-dots');
+    dotsEl.innerHTML = '';
+    slides.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === currentSlide ? ' active' : '');
+      d.onclick = () => goToSlide(i);
+      dotsEl.appendChild(d);
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('screen-slides').classList.contains('active')) return;
+    if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowLeft')  changeSlide(-1);
+    if (e.key === 'Escape')     goBack();
+  });
+</script>
+</body>
+</html>
