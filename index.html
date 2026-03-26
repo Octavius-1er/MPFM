@@ -10,25 +10,22 @@
 body{background:#1e1e1e;color:#fff;overflow:hidden;}
 
 .slides{display:flex;width:100vw;height:100vh;transition:transform 0.6s ease;}
-.slide{flex:0 0 100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem;}
+.slide{flex:0 0 100%;display:flex;flex-direction:column;justify-content:center;align-items:center;}
 
 .slide h1{font-size:3rem;margin-bottom:1rem;}
-.slide h2{margin:1rem 0;}
-
 .cards{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;}
 
 .card{
 background:linear-gradient(135deg,#4e54c8,#8f94fb);
 padding:1rem;border-radius:1rem;width:180px;height:120px;
-display:flex;flex-direction:column;justify-content:center;align-items:center;
+display:flex;justify-content:center;align-items:center;
 cursor:pointer;transition:0.3s;
 }
 .card:hover{transform:scale(1.1);}
-.card:active{transform:scale(0.95);}
 
 .nav{
 position:fixed;top:50%;transform:translateY(-50%);
-font-size:2rem;cursor:pointer;padding:1rem;
+font-size:2rem;cursor:pointer;
 }
 #prev{left:10px;}
 #next{right:10px;}
@@ -57,8 +54,10 @@ transition:1s;
 .video-slide.active{opacity:1;transform:scale(1);}
 
 .video-slide h1{font-size:3rem;}
+
 .video-buttons button{
-margin:1rem;padding:1rem;border:none;border-radius:10px;cursor:pointer;
+margin:1rem;padding:1rem;border:none;border-radius:10px;
+cursor:pointer;font-size:1.2rem;
 }
 
 #closeVideo{
@@ -82,25 +81,28 @@ background:red;color:white;border:none;padding:0.5rem;
   <button id="unlockBtn">OK</button>
 </div>
 
+<!-- AUDIO (style Jester Funk) -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1c6b.mp3"></audio>
+
 <!-- VIDEO SECRET -->
 <div id="videoPanel">
   <div class="video-slide active">
     <h1>🎮 MODE SECRET</h1>
-    <p>Bienvenue...</p>
+    <p>Bienvenue dans les jeux cachés...</p>
   </div>
 
   <div class="video-slide">
     <h1>🟣 Kahoot</h1>
-    <p>Quiz interactifs !</p>
+    <p>Quiz interactifs ultra fun !</p>
   </div>
 
   <div class="video-slide">
     <h1>🟢 LearningApps</h1>
-    <p>Jeux éducatifs !</p>
+    <p>Apprendre en jouant !</p>
   </div>
 
   <div class="video-slide">
-    <h1>🚀 GO !</h1>
+    <h1>🚀 C'est parti !</h1>
     <div class="video-buttons">
       <button onclick="window.open('https://kahoot.com/schools-u/')">Kahoot</button>
       <button onclick="window.open('https://learningapps.org/')">LearningApps</button>
@@ -137,16 +139,12 @@ slide.className='slide';
 
 slide.innerHTML=`
 <h1>${DATA[subject].emoji} ${subject}</h1>
-${DATA[subject].themes.map(t=>`
-<h2>${t.label}</h2>
 <div class="cards">
-${t.games.map(g=>`
+${DATA[subject].themes[0].games.map(g=>`
 <div class="card" onclick="window.open('${g.url}')">
 ${g.name}
 </div>`).join('')}
-</div>
-`).join('')}
-`;
+</div>`;
 slidesEl.appendChild(slide);
 }
 }
@@ -163,34 +161,17 @@ index=i;
 document.getElementById('prev').onclick=()=>showSlide(index-1);
 document.getElementById('next').onclick=()=>showSlide(index+1);
 
-document.addEventListener('keydown',e=>{
-if(e.key==="ArrowRight")showSlide(index+1);
-if(e.key==="ArrowLeft")showSlide(index-1);
-});
-
-// swipe
-let startX=0;
-slidesEl.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
-slidesEl.addEventListener('touchend',e=>{
-let endX=e.changedTouches[0].clientX;
-if(startX-endX>50)showSlide(index+1);
-if(endX-startX>50)showSlide(index-1);
-});
-
 // SECRET
-const secretBtn=document.getElementById('secretBtn');
-const panel=document.getElementById('secretPanel');
+secretBtn.onclick=()=>secretPanel.style.display='flex';
 
-secretBtn.onclick=()=>panel.style.display='flex';
-
-document.getElementById('unlockBtn').onclick=()=>{
-const val=document.getElementById('secretInput').value;
+unlockBtn.onclick=()=>{
+const val=secretInput.value.toLowerCase();
 
 if(val==="video"){
 startVideo();
-panel.style.display='none';
+secretPanel.style.display='none';
 }else{
-alert("faux");
+alert("❌ Mauvais mot !");
 }
 };
 
@@ -201,18 +182,24 @@ let interval;
 
 function startVideo(){
 document.getElementById('videoPanel').style.display='flex';
-vIndex=0;
 
+const music=document.getElementById('bgMusic');
+music.currentTime=0;
+music.play();
+
+vIndex=0;
 slidesVideo.forEach(s=>s.classList.remove('active'));
 slidesVideo[0].classList.add('active');
 
 interval=setInterval(()=>{
 slidesVideo[vIndex].classList.remove('active');
 vIndex++;
+
 if(vIndex>=slidesVideo.length){
 clearInterval(interval);
 return;
 }
+
 slidesVideo[vIndex].classList.add('active');
 },2000);
 }
@@ -220,6 +207,10 @@ slidesVideo[vIndex].classList.add('active');
 document.getElementById('closeVideo').onclick=()=>{
 document.getElementById('videoPanel').style.display='none';
 clearInterval(interval);
+
+const music=document.getElementById('bgMusic');
+music.pause();
+music.currentTime=0;
 };
 </script>
 
