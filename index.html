@@ -1,228 +1,177 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jeux du jour 🎮</title>
-
-<!-- Favicon -->
-
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231e1c40'/%3E%3Ctext y='.9em' font-size='72' x='50%25' text-anchor='middle'%3E🎮%3C/text%3E%3C/svg%3E">
-<link rel="icon" href="data:,">
-
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-
+<title>Menu Jeux Éducatifs</title>
 <style>
-:root{
---bg:#12112b;
---card:#1e1c40;
---text:#f0eeff;
---sub:#9b96c8;
---accent:#c084fc;
-}
+/* === RESET & BASIC === */
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif;}
+body { background:#1e1e1e; color:#fff; overflow-x:hidden; }
 
-*{margin:0;padding:0;box-sizing:border-box;}
+/* === SLIDE CONTAINER === */
+.slides { display:flex; overflow-x:hidden; width:100vw; height:100vh; scroll-snap-type:x mandatory; }
+.slide { flex:0 0 100%; display:flex; flex-direction:column; justify-content:center; align-items:center; 
+        scroll-snap-align:start; transition: transform 0.8s ease; padding:2rem; }
 
-body{
-font-family:'Nunito',sans-serif;
-background:var(--bg);
-color:var(--text);
-display:flex;
-align-items:center;
-justify-content:center;
-height:100vh;
-overflow:hidden;
-}
+/* === SLIDE STYLE === */
+.slide h1 { font-size:4rem; margin-bottom:1rem; }
+.slide h2 { font-size:2rem; margin-bottom:2rem; }
+.slide .cards { display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem; }
+.card { background:linear-gradient(135deg,#4e54c8,#8f94fb); padding:1.5rem; border-radius:1rem; 
+        width:220px; height:140px; display:flex; flex-direction:column; justify-content:center; align-items:center; 
+        box-shadow:0 8px 20px rgba(0,0,0,0.3); cursor:pointer; transition: transform 0.3s, box-shadow 0.3s; text-align:center; }
+.card:hover { transform: translateY(-10px) scale(1.05); box-shadow:0 12px 30px rgba(0,0,0,0.5); }
+.card span { font-size:2.5rem; margin-bottom:0.5rem; }
 
-/* container */
-#app{
-width:100%;
-max-width:900px;
-height:100vh;
-display:flex;
-flex-direction:column;
-}
+/* === NAV BUTTONS === */
+.nav { position:fixed; top:50%; transform:translateY(-50%); width:50px; height:50px; 
+       background:rgba(0,0,0,0.5); color:#fff; font-size:2rem; display:flex; justify-content:center; align-items:center;
+       border-radius:50%; cursor:pointer; user-select:none; z-index:10; }
+#prev { left:1rem; }
+#next { right:1rem; }
 
-/* header */
-header{
-padding:20px;
-text-align:center;
-font-family:'Baloo 2',cursive;
-font-size:1.6rem;
-font-weight:800;
-}
+/* === SECRET MODE BUTTON === */
+#secretBtn { position:fixed; bottom:1rem; right:1rem; padding:0.8rem 1.2rem; background:#ff4757; color:#fff;
+             border:none; border-radius:0.5rem; cursor:pointer; font-size:1rem; z-index:10; }
+#secretPanel { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95);
+               display:none; flex-direction:column; justify-content:center; align-items:center; gap:1rem; z-index:20; }
+#secretPanel input { padding:0.5rem 1rem; font-size:1rem; border-radius:0.5rem; border:none; width:250px; }
+#secretPanel button { padding:0.5rem 1rem; font-size:1rem; border-radius:0.5rem; border:none; background:#2ed573; color:#000; cursor:pointer; }
 
-/* grid */
-.grid{
-flex:1;
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:14px;
-padding:16px;
-overflow:auto;
-}
-
-/* card */
-.card{
-background:var(--card);
-border-radius:16px;
-padding:20px;
-cursor:pointer;
-transition:all .25s cubic-bezier(.22,1,.36,1);
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-text-align:center;
-}
-
-.card:hover{
-transform:translateY(-6px) scale(1.03);
-box-shadow:0 20px 40px rgba(0,0,0,0.5);
-}
-
-.card span{
-font-size:2rem;
-margin-bottom:10px;
-}
-
-/* slide */
-.screen{
-position:absolute;
-inset:0;
-background:var(--bg);
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-opacity:0;
-pointer-events:none;
-transition:.4s;
-}
-
-.screen.active{
-opacity:1;
-pointer-events:auto;
-}
-
-/* buttons */
-button{
-background:var(--accent);
-border:none;
-padding:12px 22px;
-border-radius:30px;
-font-weight:700;
-cursor:pointer;
-margin-top:16px;
-}
-
-button:hover{
-transform:scale(1.05);
-}
-
-/* mobile */
+/* === RESPONSIVE MOBILE === */
 @media(max-width:600px){
-header{font-size:1.2rem;}
-.card{padding:16px;}
+  .slide h1 { font-size:3rem; }
+  .slide h2 { font-size:1.5rem; }
+  .card { width:150px; height:120px; font-size:0.9rem; }
 }
 </style>
-
 </head>
-
 <body>
 
-<div id="app">
-<header>🎮 Jeux du jour</header>
-<div class="grid" id="menu"></div>
+<div class="slides" id="slides"></div>
+
+<div class="nav" id="prev">&#10094;</div>
+<div class="nav" id="next">&#10095;</div>
+
+<!-- SECRET MODE -->
+<button id="secretBtn">💻 Mode Secret</button>
+<div id="secretPanel">
+  <h2>Mode Secret 🔑</h2>
+  <input type="text" id="secretInput" placeholder="Tape le mot secret...">
+  <button id="unlockBtn">Accéder</button>
 </div>
 
 <script>
-const DATA={
+// === DATA COMPLETE ===
+const DATA = {
 
-maths:{
-label:'🔢 Maths',
-themes:[
-{
-label:'Calcul',
-games:[
-{name:'Mathador',url:'https://mathador.fr'},
-{name:'Numix',url:'https://numix.fr'}
-]
-}
-]
-},
+maths:{emoji:"🔢",themes:[
+  {label:"Calcul",games:[
+    {name:"Mathador",url:"https://mathador.fr"},
+    {name:"Numix",url:"https://www.numix.fr"}
+  ]}
+]},
 
-francais:{
-label:'📖 Français',
-themes:[
-{
-label:'Vocabulaire',
-games:[
-{name:'Sutom',url:'https://sutom.nocle.fr'},
-{name:'LearningApps',url:'https://learningapps.org'}
-]
-},
-{
-label:'Orthographe',
-games:[
-{name:'Dictée',url:'https://www.orthodidacte.com'}
-]
-}
-]
-},
+francais:{emoji:"📖",themes:[
+  {label:"Vocabulaire",games:[
+    {name:"Sutom",url:"https://sutom.nocle.fr"},
+    {name:"LearningApps",url:"https://learningapps.org"}
+  ]},
+  {label:"Orthographe",games:[
+    {name:"Dictée",url:"https://www.orthodidacte.com"}
+  ]}
+]},
 
-logique:{
-label:'🧩 Logique',
-themes:[
-{
-label:'Réflexion',
-games:[
-{name:'2048',url:'https://play2048.co'}
-]
-}
-]
-}
+logique:{emoji:"🧩",themes:[
+  {label:"Réflexion",games:[
+    {name:"2048",url:"https://play2048.co"}
+  ]}
+]},
 
+allemand:{emoji:"🇩🇪",themes:[
+  {
+    label:"École",games:[
+      {name:"L'emploi du temps",url:"https://create.kahoot.it/share/der-stundenplan/6ef13017-9576-40bd-b66d-482d873f15fa"},
+      {name:"Affaires scolaires",url:"https://create.kahoot.it/share/les-affaires-scolaires-en-allemand/9c27db85-f4d2-40af-b137-48a7142e0d25"},
+      {name:"LearningApps allemand",url:"https://learningapps.org/user/User15347439"}
+    ]
+  },
+  {
+    label:"Culture",games:[
+      {name:"Karneval",url:"https://create.kahoot.it/share/karneval/70b065ac-45fb-4693-812c-1b8d3a71e48d"},
+      {name:"Journée franco-allemande",url:"https://create.kahoot.it/share/la-journee-franco-allemande/b23a3470-6641-4ac9-bccf-6e4e9d15b69f"}
+    ]
+  },
+  {
+    label:"Général",games:[
+      {name:"L'heure",url:"https://create.kahoot.it/share/uhr-auf-deutsch/5770e7c4-15c9-42f1-9fb6-e693c3d7b687"},
+      {name:"Animaux",url:"https://create.kahoot.it/share/die-tiere/36821bbb-c16e-48ec-84ab-1b4244d7e133"},
+      {name:"Couleurs",url:"https://create.kahoot.it/share/farbe-auf-deutsch/6dc63059-a322-4bda-b8fe-bade35dd03ac"}
+    ]
+  }
+]}
 };
 
-const menu=document.getElementById("menu");
+// === GENERATE SLIDES ===
+const slidesEl = document.getElementById('slides');
 
-function renderMenu(){
-menu.innerHTML="";
-Object.entries(DATA).forEach(([key,val])=>{
-const div=document.createElement("div");
-div.className="card";
-div.innerHTML=`<span>${val.label.split(" ")[0]}</span><b>${val.label}</b>`;
-div.onclick=()=>openThemes(val);
-menu.appendChild(div);
-});
+for(const subject in DATA){
+  const slide = document.createElement('div');
+  slide.className = 'slide';
+  slide.innerHTML = `
+    <h1>${DATA[subject].emoji} ${subject.toUpperCase()}</h1>
+    <div class="cards">
+      ${DATA[subject].themes.map(theme=>`
+        ${theme.games.map(game=>`
+          <div class="card" onclick="window.open('${game.url}','_blank')">
+            <span>${DATA[subject].emoji}</span>
+            <strong>${game.name}</strong>
+          </div>
+        `).join('')}
+      `).join('')}
+    </div>
+  `;
+  slidesEl.appendChild(slide);
 }
 
-function openThemes(subject){
-menu.innerHTML="";
-subject.themes.forEach(t=>{
-const div=document.createElement("div");
-div.className="card";
-div.innerHTML=`<span>📚</span><b>${t.label}</b>`;
-div.onclick=()=>openGames(t);
-menu.appendChild(div);
-});
+// === SLIDE NAVIGATION ===
+let currentIndex = 0;
+const allSlides = document.querySelectorAll('.slide');
+
+function showSlide(index){
+  if(index <0) index=0;
+  if(index >= allSlides.length) index=allSlides.length-1;
+  slidesEl.style.transform = `translateX(-${index*100}vw)`;
+  currentIndex = index;
 }
 
-function openGames(theme){
-menu.innerHTML="";
-theme.games.forEach(g=>{
-const div=document.createElement("div");
-div.className="card";
-div.innerHTML=`<span>🎮</span><b>${g.name}</b>`;
-div.onclick=()=>window.open(g.url,"_blank");
-menu.appendChild(div);
-});
-}
+document.getElementById('prev').addEventListener('click',()=>showSlide(currentIndex-1));
+document.getElementById('next').addEventListener('click',()=>showSlide(currentIndex+1));
 
-renderMenu();
+// === OPTIONAL: SWIPE MOBILE ===
+let startX = 0;
+slidesEl.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
+slidesEl.addEventListener('touchend',e=>{
+  const endX = e.changedTouches[0].clientX;
+  if(startX-endX >50) showSlide(currentIndex+1);
+  if(endX-startX >50) showSlide(currentIndex-1);
+});
+
+// === SECRET MODE ===
+const secretBtn = document.getElementById('secretBtn');
+const secretPanel = document.getElementById('secretPanel');
+const secretInput = document.getElementById('secretInput');
+const unlockBtn = document.getElementById('unlockBtn');
+
+secretBtn.addEventListener('click', ()=> secretPanel.style.display='flex');
+unlockBtn.addEventListener('click', ()=>{
+  const val = secretInput.value.trim().toLowerCase();
+  if(val === 'kahoot') window.open('https://kahoot.com/schools-u/', '_blank');
+  else if(val === 'learning') window.open('https://learningapps.org/', '_blank');
+  else alert('Mot secret incorrect !');
+  secretInput.value='';
+});
 </script>
-
 </body>
 </html>
