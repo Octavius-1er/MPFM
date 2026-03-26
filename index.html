@@ -1,218 +1,52 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menu Jeux Éducatifs</title>
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-body{background:#1e1e1e;color:#fff;overflow:hidden;}
+function tick ( now ) {
+  const elapsed = now - t0 ;
+  const frac = Math . min ( elapsed / dur , 1 ) ;
+  // ease out
+  const eased = 1 - Math . pow ( 1 - frac , 3 ) ;
+  progress = start + ( end - start ) * eased ;
+  bar . style . width = progress + '%' ;
+  pct . textContent = Math . round ( progress ) + '%' ;
 
-.slides{display:flex;width:100vw;height:100vh;transition:transform 0.6s ease;}
-.slide{flex:0 0 100%;display:flex;flex-direction:column;justify-content:center;align-items:center;}
-
-.slide h1{font-size:3rem;margin-bottom:1rem;}
-.cards{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;}
-
-.card{
-background:linear-gradient(135deg,#4e54c8,#8f94fb);
-padding:1rem;border-radius:1rem;width:180px;height:120px;
-display:flex;justify-content:center;align-items:center;
-cursor:pointer;transition:0.3s;
-}
-.card:hover{transform:scale(1.1);}
-
-.nav{
-position:fixed;top:50%;transform:translateY(-50%);
-font-size:2rem;cursor:pointer;
-}
-#prev{left:10px;}
-#next{right:10px;}
-
-#secretBtn{
-position:fixed;bottom:10px;right:10px;
-padding:0.5rem 1rem;background:red;border:none;color:white;cursor:pointer;
+  if ( frac < 1 ) {
+    requestAnimationFrame ( tick ) ;
+  } else {
+    progress = end ;
+    if ( stepIndex < steps . length ) {
+      // small pause between steps
+      setTimeout ( runStep , 80 + Math . random ( ) * 120 ) ;
+    } else {
+      // Done !
+      onLoadComplete ( ) ;
+    }
+  }
 }
 
-#secretPanel{
-position:fixed;top:0;left:0;width:100vw;height:100vh;
-background:black;display:none;justify-content:center;align-items:center;flex-direction:column;
+requestAnimationFrame ( tick ) ;
 }
 
-/* VIDEO */
-#videoPanel{
-position:fixed;top:0;left:0;width:100vw;height:100vh;
-background:black;display:none;justify-content:center;align-items:center;
-z-index:50;
+function onLoadComplete ( ) {
+  clearInterval ( tipInterval ) ;
+  setTip ( "✅ Tout est prêt ! Bonne séance de jeux 🎉" ) ;
+  setTimeout ( ( ) => {
+    pressEl . classList . add ( 'show' ) ;
+    ready = true ;
+  } , 600 ) ;
 }
 
-.video-slide{
-position:absolute;text-align:center;opacity:0;transform:scale(0.8);
-transition:1s;
-}
-.video-slide.active{opacity:1;transform:scale(1);}
+// Start loading after a tiny delay (let DOM paint first)
+setTimeout ( runStep , 200 ) ;
 
-.video-slide h1{font-size:3rem;}
+// Dismiss on click or key
+screen . addEventListener ( 'click' , dismiss ) ;
+document . addEventListener ( 'keydown' , e => {
+  if ( e . key !== 'F5' && e . key !== 'F12' )
+    dismiss ( ) ;
+} ) ;
 
-.video-buttons button{
-margin:1rem;padding:1rem;border:none;border-radius:10px;
-cursor:pointer;font-size:1.2rem;
-}
+} ) ( ) ;
 
-#closeVideo{
-position:absolute;bottom:20px;right:20px;
-background:red;color:white;border:none;padding:0.5rem;
-}
-</style>
-</head>
-
-<body>
-
-<div class="slides" id="slides"></div>
-
-<div id="prev" class="nav">❮</div>
-<div id="next" class="nav">❯</div>
-
-<button id="secretBtn">💻</button>
-
-<div id="secretPanel">
-  <input id="secretInput" placeholder="mot secret">
-  <button id="unlockBtn">OK</button>
-</div>
-
-<!-- AUDIO (style Jester Funk) -->
-<audio id="bgMusic" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1c6b.mp3"></audio>
-
-<!-- VIDEO SECRET -->
-<div id="videoPanel">
-  <div class="video-slide active">
-    <h1>🎮 MODE SECRET</h1>
-    <p>Bienvenue dans les jeux cachés...</p>
-  </div>
-
-  <div class="video-slide">
-    <h1>🟣 Kahoot</h1>
-    <p>Quiz interactifs ultra fun !</p>
-  </div>
-
-  <div class="video-slide">
-    <h1>🟢 LearningApps</h1>
-    <p>Apprendre en jouant !</p>
-  </div>
-
-  <div class="video-slide">
-    <h1>🚀 C'est parti !</h1>
-    <div class="video-buttons">
-      <button onclick="window.open('https://kahoot.com/schools-u/')">Kahoot</button>
-      <button onclick="window.open('https://learningapps.org/')">LearningApps</button>
-    </div>
-  </div>
-
-  <button id="closeVideo">❌</button>
-</div>
-
-<script>
-const DATA={
-maths:{emoji:"🔢",themes:[{label:"Calcul",games:[
-{name:"Mathador",url:"https://mathador.fr"}
-]}]},
-francais:{emoji:"📖",themes:[{label:"Vocabulaire",games:[
-{name:"Sutom",url:"https://sutom.nocle.fr"}
-]}]},
-logique:{emoji:"🧩",themes:[{label:"Réflexion",games:[
-{name:"2048",url:"https://play2048.co"}
-]}]},
-allemand:{emoji:"🇩🇪",themes:[{label:"Jeux",games:[
-{name:"Kahoot",url:"https://kahoot.com"},
-{name:"LearningApps",url:"https://learningapps.org"}
-]}]}
-};
-
-const slidesEl=document.getElementById('slides');
-
-function generateSlides(){
-slidesEl.innerHTML="";
-for(const subject in DATA){
-const slide=document.createElement('div');
-slide.className='slide';
-
-slide.innerHTML=`
-<h1>${DATA[subject].emoji} ${subject}</h1>
-<div class="cards">
-${DATA[subject].themes[0].games.map(g=>`
-<div class="card" onclick="window.open('${g.url}')">
-${g.name}
-</div>`).join('')}
-</div>`;
-slidesEl.appendChild(slide);
-}
-}
-generateSlides();
-
-let index=0;
-function showSlide(i){
-if(i<0)i=0;
-if(i>=slidesEl.children.length)i=slidesEl.children.length-1;
-slidesEl.style.transform=`translateX(-${i*100}vw)`;
-index=i;
-}
-
-document.getElementById('prev').onclick=()=>showSlide(index-1);
-document.getElementById('next').onclick=()=>showSlide(index+1);
-
-// SECRET
-secretBtn.onclick=()=>secretPanel.style.display='flex';
-
-unlockBtn.onclick=()=>{
-const val=secretInput.value.toLowerCase();
-
-if(val==="video"){
-startVideo();
-secretPanel.style.display='none';
-}else{
-alert("❌ Mauvais mot !");
-}
-};
-
-// VIDEO
-const slidesVideo=document.querySelectorAll('.video-slide');
-let vIndex=0;
-let interval;
-
-function startVideo(){
-document.getElementById('videoPanel').style.display='flex';
-
-const music=document.getElementById('bgMusic');
-music.currentTime=0;
-music.play();
-
-vIndex=0;
-slidesVideo.forEach(s=>s.classList.remove('active'));
-slidesVideo[0].classList.add('active');
-
-interval=setInterval(()=>{
-slidesVideo[vIndex].classList.remove('active');
-vIndex++;
-
-if(vIndex>=slidesVideo.length){
-clearInterval(interval);
-return;
-}
-
-slidesVideo[vIndex].classList.add('active');
-},2000);
-}
-
-document.getElementById('closeVideo').onclick=()=>{
-document.getElementById('videoPanel').style.display='none';
-clearInterval(interval);
-
-const music=document.getElementById('bgMusic');
-music.pause();
-music.currentTime=0;
-};
-</script>
-
-</body>
-</html>
+</ script >
+</ body >
+</ html >
