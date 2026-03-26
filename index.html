@@ -1,194 +1,228 @@
-<!-- ⚠️ TON CODE EST TRÈS LONG — JE GARDE TOUT IDENTIQUE SAUF LA CORRECTION -->
+<!DOCTYPE html>
 
-<!-- ... TOUT TON HTML / CSS RESTE IDENTIQUE ... -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeux du jour 🎮</title>
+
+<!-- Favicon -->
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231e1c40'/%3E%3Ctext y='.9em' font-size='72' x='50%25' text-anchor='middle'%3E🎮%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:,">
+
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--bg:#12112b;
+--card:#1e1c40;
+--text:#f0eeff;
+--sub:#9b96c8;
+--accent:#c084fc;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+font-family:'Nunito',sans-serif;
+background:var(--bg);
+color:var(--text);
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+overflow:hidden;
+}
+
+/* container */
+#app{
+width:100%;
+max-width:900px;
+height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* header */
+header{
+padding:20px;
+text-align:center;
+font-family:'Baloo 2',cursive;
+font-size:1.6rem;
+font-weight:800;
+}
+
+/* grid */
+.grid{
+flex:1;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:14px;
+padding:16px;
+overflow:auto;
+}
+
+/* card */
+.card{
+background:var(--card);
+border-radius:16px;
+padding:20px;
+cursor:pointer;
+transition:all .25s cubic-bezier(.22,1,.36,1);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
+}
+
+.card:hover{
+transform:translateY(-6px) scale(1.03);
+box-shadow:0 20px 40px rgba(0,0,0,0.5);
+}
+
+.card span{
+font-size:2rem;
+margin-bottom:10px;
+}
+
+/* slide */
+.screen{
+position:absolute;
+inset:0;
+background:var(--bg);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+opacity:0;
+pointer-events:none;
+transition:.4s;
+}
+
+.screen.active{
+opacity:1;
+pointer-events:auto;
+}
+
+/* buttons */
+button{
+background:var(--accent);
+border:none;
+padding:12px 22px;
+border-radius:30px;
+font-weight:700;
+cursor:pointer;
+margin-top:16px;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+/* mobile */
+@media(max-width:600px){
+header{font-size:1.2rem;}
+.card{padding:16px;}
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="app">
+<header>🎮 Jeux du jour</header>
+<div class="grid" id="menu"></div>
+</div>
 
 <script>
-const DATA = {
+const DATA={
 
-  maths: {
-    label: '🔢 Maths',
-    color: '#f7971e',
-    themes: [
-      {
-        id: 'calcul',
-        emoji: '🎯',
-        label: 'Calcul mental',
-        desc: 'Opérations & rapidité',
-        games: [
-          {
-            emoji: '🎯', name: 'Mathador',
-            category: 'Calcul mental',
-            desc: 'Utilise les 4 opérations pour atteindre un nombre cible.',
-            chips: ['Calcul mental', 'Solo / Duo', 'Tous niveaux'],
-            url: 'https://mathador.fr'
-          },
-          {
-            emoji: '⚡', name: 'Numix',
-            category: 'Rapidité',
-            desc: 'Des opérations à résoudre contre la montre.',
-            chips: ['Rapidité', 'Solo', 'Interactif'],
-            url: 'https://www.numix.fr'
-          }
-        ]
-      },
-      {
-        id: 'geometrie',
-        emoji: '📐',
-        label: 'Géométrie',
-        desc: 'Formes & constructions',
-        games: [
-          {
-            emoji: '📐', name: 'GeoGebra',
-            category: 'Géométrie interactive',
-            desc: 'Explore la géométrie.',
-            chips: ['Géométrie', 'Algèbre', 'Gratuit'],
-            url: 'https://www.geogebra.org/geometry'
-          }
-        ]
-      }
-    ]
-  },
+maths:{
+label:'🔢 Maths',
+themes:[
+{
+label:'Calcul',
+games:[
+{name:'Mathador',url:'https://mathador.fr'},
+{name:'Numix',url:'https://numix.fr'}
+]
+}
+]
+},
 
-  francais: {
-    label: '📖 Français',
-    color: '#56ccf2',
-    themes: [
-      {
-        id: 'vocabulaire',
-        emoji: '🔤',
-        label: 'Vocabulaire',
-        desc: 'Enrichis ton lexique',
-        games: [
-          {
-            emoji: '🔤', name: 'Sutom (Wordle FR)',
-            category: 'Vocabulaire',
-            desc: 'Trouve le mot mystère du jour en 6 tentatives.',
-            chips: ['Vocabulaire', 'Solo', 'Un mot par jour'],
-            url: 'https://sutom.nocle.fr'
-          },
-          {
-            emoji: '✏️', name: 'Mon profil learning apps',
-            category: 'Français',
-            desc: 'Entraîne-toi en français avec des exercices interactifs sur LearningApps.',
-            chips: ['LearningApps', 'Interactif', 'Français'],
-            url: 'https://learningapps.org/user/User15347439'
-          }
-        ]
-      },
-      {
-        id: 'orthographe',
-        emoji: '📝',
-        label: 'Orthographe',
-        desc: 'Dictées & règles',
-        games: [
-          {
-            emoji: '📝', name: 'Dictée du jour',
-            category: 'Orthographe',
-            desc: 'Entraîne-toi avec une dictée interactive.',
-            chips: ['Orthographe', 'Solo', 'Audio'],
-            url: 'https://www.orthodidacte.com/exercice/dictee/'
-          }
-        ]
-      }
-    ]
-  },
+francais:{
+label:'📖 Français',
+themes:[
+{
+label:'Vocabulaire',
+games:[
+{name:'Sutom',url:'https://sutom.nocle.fr'},
+{name:'LearningApps',url:'https://learningapps.org'}
+]
+},
+{
+label:'Orthographe',
+games:[
+{name:'Dictée',url:'https://www.orthodidacte.com'}
+]
+}
+]
+},
 
-  culture: {
-    label: '🌍 Culture générale',
-    color: '#6fcf97',
-    themes: [
-      {
-        id: 'geo',
-        emoji: '🗺️',
-        label: 'Géographie',
-        desc: 'Pays, capitales & cartes',
-        games: [
-          {
-            emoji: '🗺️', name: 'Seterra',
-            category: 'Géographie',
-            desc: 'Apprends les pays.',
-            chips: ['Géographie', 'Quiz'],
-            url: 'https://www.seterra.com/fr/'
-          }
-        ]
-      },
-      {
-        id: 'quiz',
-        emoji: '❓',
-        label: 'Quiz culture',
-        desc: 'Histoire, sciences & arts',
-        games: [
-          {
-            emoji: '❓', name: 'Quizz.biz',
-            category: 'Culture générale',
-            desc: 'Des centaines de questions.',
-            chips: ['Histoire', 'Sciences'],
-            url: 'https://www.quizz.biz/quizz-100.html'
-          }
-        ]
-      }
-    ]
-  },
-
-  logique: {
-    label: '🧩 Logique',
-    color: '#bb6bd9',
-    themes: [
-      {
-        id: 'strategie',
-        emoji: '♟️',
-        label: 'Stratégie',
-        desc: 'Réfléchis et planifie',
-        games: [
-          {
-            emoji: '♟️', name: 'Chess.com',
-            category: 'Stratégie',
-            desc: 'Joue aux échecs.',
-            chips: ['Stratégie'],
-            url: 'https://www.chess.com/fr/play/computer'
-          }
-        ]
-      },
-      {
-        id: 'reflexion',
-        emoji: '🔲',
-        label: 'Réflexion',
-        desc: 'Puzzles & casse-têtes',
-        games: [
-          {
-            emoji: '🔲', name: '2048',
-            category: 'Réflexion',
-            desc: 'Fusionne des tuiles.',
-            chips: ['Réflexion'],
-            url: 'https://play2048.co'
-          }
-        ]
-      }
-    ]
-  },
-
-  allemand: {
-    label: '🇩🇪 Allemand',
-    color: '#FF6B6B',
-    themes: [
-      {
-        id: 'ecole',
-        emoji: '🏫',
-        label: 'École',
-        desc: 'Vocabulaire scolaire',
-        games: [
-          {
-            emoji: '🗓️',
-            name: "L'emploi du temps",
-            category: 'Der Stundenplan',
-            desc: 'Apprends le vocabulaire.',
-            chips: ['Kahoot'],
-            url: 'https://create.kahoot.it/share/der-stundenplan/6ef13017-9576-40bd-b66d-482d873f15fa'
-          }
-        ]
-      }
-    ]
-  }
+logique:{
+label:'🧩 Logique',
+themes:[
+{
+label:'Réflexion',
+games:[
+{name:'2048',url:'https://play2048.co'}
+]
+}
+]
+}
 
 };
+
+const menu=document.getElementById("menu");
+
+function renderMenu(){
+menu.innerHTML="";
+Object.entries(DATA).forEach(([key,val])=>{
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`<span>${val.label.split(" ")[0]}</span><b>${val.label}</b>`;
+div.onclick=()=>openThemes(val);
+menu.appendChild(div);
+});
+}
+
+function openThemes(subject){
+menu.innerHTML="";
+subject.themes.forEach(t=>{
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`<span>📚</span><b>${t.label}</b>`;
+div.onclick=()=>openGames(t);
+menu.appendChild(div);
+});
+}
+
+function openGames(theme){
+menu.innerHTML="";
+theme.games.forEach(g=>{
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`<span>🎮</span><b>${g.name}</b>`;
+div.onclick=()=>window.open(g.url,"_blank");
+menu.appendChild(div);
+});
+}
+
+renderMenu();
 </script>
+
+</body>
+</html>
