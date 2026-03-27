@@ -1,52 +1,1190 @@
 <!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jeux du jour 🎮</title>
 
-function tick ( now ) {
-  const elapsed = now - t0 ;
-  const frac = Math . min ( elapsed / dur , 1 ) ;
-  // ease out
-  const eased = 1 - Math . pow ( 1 - frac , 3 ) ;
-  progress = start + ( end - start ) * eased ;
-  bar . style . width = progress + '%' ;
-  pct . textContent = Math . round ( progress ) + '%' ;
+  <!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║               GUIDE D'ÉDITION RAPIDE                        ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║                                                              ║
+  ║  AJOUTER UNE MATIÈRE :                                       ║
+  ║  → Dans la variable `DATA` ci-dessous, ajoute un bloc :      ║
+  ║    nomclé: {                                                  ║
+  ║      label: '📚 Nom affiché',                                ║
+  ║      color: '#HEX',        ← couleur principale              ║
+  ║      themes: [ ... ]       ← voir structure thème ci-dessous ║
+  ║    }                                                          ║
+  ║  → Dans le HTML, ajoute une carte dans .subject-grid :        ║
+  ║    <div class="subject-card" style="--color:..." onclick="openSubject('nomclé')"> ║
+  ║                                                              ║
+  ║  AJOUTER UN THÈME dans une matière :                         ║
+  ║    {                                                          ║
+  ║      id: 'unique-id',                                        ║
+  ║      emoji: '🔢',                                            ║
+  ║      label: 'Nom du thème',                                  ║
+  ║      desc: 'Courte description',                             ║
+  ║      games: [ ... ]        ← voir structure jeu ci-dessous   ║
+  ║    }                                                          ║
+  ║                                                              ║
+  ║  AJOUTER UN JEU dans un thème :                              ║
+  ║    {                                                          ║
+  ║      emoji: '🎯',                                            ║
+  ║      name: 'Nom du jeu',                                     ║
+  ║      category: 'Sous-titre',                                 ║
+  ║      desc: 'Description affichée sur la slide',              ║
+  ║      chips: ['Tag1', 'Tag2', 'Tag3'],                        ║
+  ║      url: 'https://...'                                      ║
+  ║    }                                                          ║
+  ║                                                              ║
+  ╚══════════════════════════════════════════════════════════════╝
+  -->
 
-  if ( frac < 1 ) {
-    requestAnimationFrame ( tick ) ;
-  } else {
-    progress = end ;
-    if ( stepIndex < steps . length ) {
-      // small pause between steps
-      setTimeout ( runStep , 80 + Math . random ( ) * 120 ) ;
-    } else {
-      // Done !
-      onLoadComplete ( ) ;
+  <!-- ── ICÔNES (favicon + raccourcis Apple / Android / Windows) ── -->
+  <!-- SVG inline encodé en base64 pour un seul fichier autonome -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231e1c40'/%3E%3Ctext y='.9em' font-size='72' x='50%25' text-anchor='middle'%3E🎮%3C/text%3E%3C/svg%3E" />
+  <!-- Apple Touch Icon (iPhone/iPad) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%231e1c40'/%3E%3Ctext y='.9em' font-size='130' x='50%25' text-anchor='middle'%3E🎮%3C/text%3E%3C/svg%3E" />
+  <!-- Microsoft / PWA -->
+  <meta name="msapplication-TileColor" content="#1e1c40" />
+  <meta name="theme-color" content="#12112b" />
+  <!-- PWA manifest inline -->
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Jeux%20du%20jour%22%2C%22short_name%22%3A%22Jeux%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2312112b%22%2C%22theme_color%22%3A%22%2312112b%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520100%2520100'%253E%253Ctext%2520y%3D'.9em'%2520font-size%3D'72'%253E%25F0%259F%258E%25AE%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #12112b; --card: #1e1c40; --text: #f0eeff; --sub: #9b96c8;
+      --active-color: #fff;
     }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg); color: var(--text);
+      height: 100vh; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── BG ── */
+    .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.12; animation: blobMove 16s ease-in-out infinite alternate; }
+    .bg-blob:nth-child(1){width:600px;height:600px;background:#7c3aed;top:-200px;left:-200px;animation-duration:18s;}
+    .bg-blob:nth-child(2){width:500px;height:500px;background:#2563eb;bottom:-150px;right:-150px;animation-duration:13s;}
+    .bg-blob:nth-child(3){width:350px;height:350px;background:#f59e0b;top:50%;left:50%;animation-duration:20s;}
+    @keyframes blobMove{from{transform:translate(0,0) scale(1);}to{transform:translate(50px,40px) scale(1.15);}}
+
+    /* ── STAGE ── */
+    #stage { position: relative; z-index: 1; width: 960px; max-width: 98vw; height: 580px; max-height: 92vh; }
+
+    /* ── SCREENS ── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.45s, transform 0.45s;
+      transform: scale(0.97);
+    }
+    .screen.active { opacity: 1; pointer-events: all; transform: scale(1); }
+    .screen.exit-left  { transform: translateX(-60px) scale(0.95); opacity: 0; }
+    .screen.exit-right { transform: translateX(60px) scale(0.95); opacity: 0; }
+
+    /* ════════════════════════════════
+       SCREEN 1 — MENU MATIÈRES
+    ════════════════════════════════ */
+    #screen-menu { gap: 0; justify-content: flex-start; overflow: hidden; }
+
+    .menu-title {
+      text-align: center; flex-shrink: 0;
+      padding: 24px 24px 16px; width: 100%;
+    }
+    .menu-title .eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--sub); margin-bottom: 10px; }
+    .menu-title h1 {
+      font-family: 'Baloo 2', cursive; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, #fff 20%, #c084fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .menu-title p { margin-top: 8px; color: var(--sub); font-size: 0.97rem; }
+
+    .menu-scroll {
+      flex: 1; width: 100%; overflow-y: auto;
+      padding: 4px 24px 32px;
+      display: flex; flex-direction: column; align-items: center;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent;
+    }
+    .menu-scroll::-webkit-scrollbar { width: 4px; }
+    .menu-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+    .menu-fade-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+      background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+      pointer-events: none; z-index: 2; transition: opacity 0.3s;
+    }
+    .menu-fade-bottom.hidden { opacity: 0; }
+
+    .subject-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; width: 100%; max-width: 620px; }
+
+    .subject-card {
+      background: var(--card); border: 2px solid rgba(255,255,255,0.07);
+      border-radius: 20px; padding: 22px 20px;
+      cursor: pointer; display: flex; align-items: center; gap: 15px;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      animation: cardUp 0.6s var(--d,0s) cubic-bezier(.22,1,.36,1) both;
+    }
+    .subject-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 16px 40px rgba(0,0,0,0.4); border-color: var(--color); }
+    @keyframes cardUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+
+    .subject-icon {
+      width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.75rem;
+      background: color-mix(in srgb, var(--color) 22%, transparent);
+    }
+    .subject-info h2 { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 800; color: var(--color); }
+    .subject-info p  { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
+    .subject-arrow   { margin-left: auto; font-size: 1.3rem; opacity: 0.3; transition: opacity 0.2s, transform 0.2s; }
+    .subject-card:hover .subject-arrow { opacity: 1; transform: translateX(4px); }
+
+    /* ════════════════════════════════
+       SCREEN 2 — CHOIX DU THÈME
+    ════════════════════════════════ */
+    #screen-themes { gap: 0; padding: 0; justify-content: stretch; }
+
+    .themes-shell {
+      width: 100%; height: 100%;
+      background: var(--card); border-radius: 26px;
+      border: 2px solid rgba(255,255,255,0.07);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .themes-topbar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .themes-body {
+      flex: 1; overflow-y: auto; padding: 28px 32px;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+    .themes-body::-webkit-scrollbar { width: 4px; }
+    .themes-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .themes-header { text-align: center; }
+    .themes-header h2 { font-family: 'Baloo 2', cursive; font-size: 1.9rem; font-weight: 800; color: var(--active-color); }
+    .themes-header p  { color: var(--sub); font-size: 0.93rem; margin-top: 6px; }
+
+    .themes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+
+    .theme-card {
+      background: rgba(255,255,255,0.04);
+      border: 2px solid rgba(255,255,255,0.07);
+      border-radius: 18px; padding: 20px 18px;
+      cursor: pointer; text-align: center;
+      transition: transform 0.22s, border-color 0.22s, background 0.22s;
+      animation: cardUp 0.5s var(--td,0s) cubic-bezier(.22,1,.36,1) both;
+    }
+    .theme-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--active-color);
+      background: color-mix(in srgb, var(--active-color) 10%, transparent);
+    }
+    .theme-card .t-emoji { font-size: 2.6rem; margin-bottom: 10px; }
+    .theme-card h3 { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800; color: var(--active-color); }
+    .theme-card p  { font-size: 0.76rem; color: var(--sub); margin-top: 4px; line-height: 1.4; }
+    .theme-card .t-count { margin-top: 10px; font-size: 0.72rem; font-weight: 700; color: var(--sub); background: rgba(255,255,255,0.07); padding: 3px 10px; border-radius: 50px; display: inline-block; }
+
+    /* ════════════════════════════════
+       SCREEN 3 — SLIDES
+    ════════════════════════════════ */
+    #screen-slides { padding: 0; justify-content: stretch; }
+    .slide-shell {
+      width: 100%; height: 100%; background: var(--card); border-radius: 26px;
+      border: 2px solid rgba(255,255,255,0.07); box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .slide-topbar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.07); border: none; color: var(--sub);
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem;
+      padding: 5px 13px; border-radius: 50px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+    .topbar-breadcrumb {
+      font-size: 0.82rem; color: var(--sub); font-weight: 600;
+      display: flex; align-items: center; gap: 6px; min-width: 0;
+    }
+    .topbar-breadcrumb .bc-subject { color: var(--active-color); font-weight: 800; font-family: 'Baloo 2', cursive; }
+    .topbar-breadcrumb .bc-sep { opacity: 0.4; }
+    .topbar-breadcrumb .bc-theme { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slide-counter { margin-left: auto; font-size: 0.8rem; color: var(--sub); font-weight: 700; white-space: nowrap; }
+
+    .progress-bar { height: 3px; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+    .progress-fill { height: 100%; background: var(--active-color); transition: width 0.4s ease; }
+
+    .slide-viewport { flex: 1; position: relative; overflow: hidden; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 28px 48px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s, transform 0.4s;
+      transform: translateX(80px);
+    }
+    .slide.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+    .slide.prev   { transform: translateX(-80px); opacity: 0; }
+
+    /* Intro slide */
+    .slide-intro { gap: 12px; text-align: center; }
+    .slide-intro .big-emoji { font-size: 4.2rem; animation: pulse 2.5s ease-in-out infinite; }
+    @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+    .slide-intro h2 { font-family: 'Baloo 2', cursive; font-size: clamp(1.7rem, 3.5vw, 2.5rem); font-weight: 800; }
+    .slide-intro .intro-desc { color: var(--sub); font-size: 0.95rem; max-width: 440px; line-height: 1.65; }
+    .start-btn {
+      margin-top: 8px; background: var(--active-color); color: #12112b;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem;
+      padding: 11px 28px; border-radius: 50px; border: none; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .start-btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+
+    /* Game slide */
+    .slide-game { gap: 0; }
+    .game-header { width: 100%; display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+    .game-icon-big {
+      width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 2.2rem;
+      background: color-mix(in srgb, var(--active-color) 18%, transparent);
+      border: 2px solid color-mix(in srgb, var(--active-color) 28%, transparent);
+    }
+    .game-header-info h3 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 800; color: var(--active-color); }
+    .game-category { font-size: 0.76rem; color: var(--sub); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+    .game-desc-box {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+      padding: 15px 20px; color: var(--sub); font-size: 0.92rem; line-height: 1.65; margin-bottom: 16px;
+    }
+    .game-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; width: 100%; }
+    .chip { background: rgba(255,255,255,0.07); font-size: 0.75rem; font-weight: 700; color: var(--sub); padding: 4px 12px; border-radius: 50px; }
+    .play-btn {
+      background: var(--active-color); color: #12112b;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.05rem;
+      padding: 12px 32px; border-radius: 50px; border: none; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .play-btn:hover { transform: scale(1.04) translateY(-2px); box-shadow: 0 12px 36px rgba(0,0,0,0.45); }
+
+    /* Bottom nav */
+    .slide-nav {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 13px 22px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .nav-btn {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: rgba(255,255,255,0.07); border: none; color: #fff;
+      font-size: 1.15rem; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.15); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+    .nav-dots { display: flex; gap: 7px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.25s; }
+    .dot.active { width: 22px; border-radius: 4px; background: var(--active-color); }
+
+    /* Shared topbar elements */
+    .topbar-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+
+    /* responsive */
+    @media(max-width:640px){
+      .subject-grid{grid-template-columns:1fr;max-width:320px;}
+      .slide{padding:18px 20px;}
+      .themes-body{padding:20px;}
+      .themes-grid{grid-template-columns:1fr 1fr;}
+    }
+
+    /* ════════════════════════════════
+       LOADING SCREEN — style GTA/Brawl Stars
+    ════════════════════════════════ */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #08071a;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding-bottom: 48px;
+      overflow: hidden;
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    #loading-screen.hide {
+      opacity: 0;
+      transform: scale(1.04);
+      pointer-events: none;
+    }
+
+    /* Cinematic art — abstract geometric shapes like GTA loading screens */
+    .load-art {
+      position: absolute; inset: 0;
+      overflow: hidden;
+    }
+    .load-art::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 40%, rgba(187,107,217,0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 80% at 20% 60%, rgba(77,150,255,0.2) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 50% 80%, rgba(247,151,30,0.15) 0%, transparent 60%);
+    }
+    /* big diagonal stripe — GTA vibe */
+    .load-stripe {
+      position: absolute;
+      width: 200%; height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      transform-origin: center;
+      animation: stripeMove 3s ease-in-out infinite;
+    }
+    .load-stripe:nth-child(1){ top: 30%; transform: rotate(-8deg); animation-delay: 0s; }
+    .load-stripe:nth-child(2){ top: 55%; transform: rotate(-8deg); animation-delay: 0.6s; opacity:0.5; }
+    .load-stripe:nth-child(3){ top: 70%; transform: rotate(-8deg); animation-delay: 1.2s; opacity:0.3; }
+    @keyframes stripeMove {
+      0%   { transform: rotate(-8deg) translateX(-10%); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: rotate(-8deg) translateX(10%); opacity: 0; }
+    }
+
+    /* Big emoji art */
+    .load-hero-emoji {
+      position: absolute;
+      font-size: clamp(180px, 35vw, 320px);
+      bottom: 80px; right: -20px;
+      opacity: 0.07;
+      filter: blur(2px);
+      animation: heroFloat 4s ease-in-out infinite;
+      user-select: none;
+      line-height: 1;
+    }
+    @keyframes heroFloat {
+      0%,100% { transform: translateY(0) rotate(-5deg); }
+      50%      { transform: translateY(-20px) rotate(-3deg); }
+    }
+
+    /* Scattered small emojis */
+    .load-scatter {
+      position: absolute; font-size: 2rem; opacity: 0;
+      animation: scatter 6s ease-in-out infinite;
+      user-select: none;
+    }
+    @keyframes scatter {
+      0%   { opacity: 0; transform: translateY(20px) scale(0.8); }
+      20%  { opacity: 0.18; }
+      80%  { opacity: 0.18; }
+      100% { opacity: 0; transform: translateY(-20px) scale(1.1); }
+    }
+
+    /* Content */
+    .load-content {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 680px;
+      padding: 0 40px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .load-tip-label {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 3px;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+    }
+    .load-tip {
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.4;
+      min-height: 2.8em;
+      transition: opacity 0.4s;
+    }
+    .load-tip.fade { opacity: 0; }
+
+    /* Progress bar — Brawl Stars style */
+    .load-bar-wrap {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .load-bar-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .load-game-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.05rem; font-weight: 800;
+      color: #fff; letter-spacing: 1px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .load-game-name span { font-size: 1.3rem; }
+    .load-pct { font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.5); }
+
+    .load-bar-track {
+      width: 100%; height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .load-bar-fill {
+      height: 100%; width: 0%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #c084fc, #818cf8, #60a5fa);
+      background-size: 200% 100%;
+      animation: barShimmer 1.5s linear infinite;
+      transition: width 0.25s ease;
+      box-shadow: 0 0 12px rgba(192,132,252,0.6);
+    }
+    @keyframes barShimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Press any key */
+    .load-press {
+      position: absolute; bottom: 48px; right: 40px;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,0.25);
+      animation: blink 1.8s ease-in-out infinite;
+      opacity: 0; transition: opacity 0.5s;
+    }
+    .load-press.show { opacity: 1; }
+    @keyframes blink { 0%,100%{opacity:0.25;} 50%{opacity:0.7;} }
+
+    /* Version tag */
+    .load-version {
+      position: absolute; top: 20px; right: 24px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+      color: rgba(255,255,255,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     LOADING SCREEN
+══════════════════════════════════ -->
+<div id="loading-screen">
+  <div class="load-art">
+    <div class="load-stripe"></div>
+    <div class="load-stripe"></div>
+    <div class="load-stripe"></div>
+  </div>
+  <div class="load-hero-emoji">🎮</div>
+  <div class="load-scatter" style="top:12%;left:8%;animation-delay:0s;">📐</div>
+  <div class="load-scatter" style="top:20%;left:55%;animation-delay:1.2s;">📖</div>
+  <div class="load-scatter" style="top:40%;left:15%;animation-delay:2.4s;">🌍</div>
+  <div class="load-scatter" style="top:25%;left:80%;animation-delay:0.8s;">🔢</div>
+  <div class="load-scatter" style="top:55%;left:35%;animation-delay:3s;">🧩</div>
+  <div class="load-scatter" style="top:15%;left:40%;animation-delay:1.8s;">♟️</div>
+  <div class="load-scatter" style="top:65%;left:75%;animation-delay:2s;">🎯</div>
+  <div class="load-version">v1.0</div>
+  <div class="load-content">
+    <div class="load-tip-label">💡 Le saviez-vous ?</div>
+    <div class="load-tip" id="load-tip">Chargement en cours...</div>
+    <div class="load-bar-wrap">
+      <div class="load-bar-row">
+        <div class="load-game-name"><span>🎮</span> Jeux du jour</div>
+        <div class="load-pct" id="load-pct">0%</div>
+      </div>
+      <div class="load-bar-track">
+        <div class="load-bar-fill" id="load-bar"></div>
+      </div>
+    </div>
+  </div>
+  <div class="load-press" id="load-press">Appuie sur une touche ou clique pour continuer</div>
+</div>
+
+<div class="bg-blobs">
+  <div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div>
+</div>
+
+<div id="stage">
+
+  <!-- ══════════════════════════════════
+       SCREEN 1 — MENU MATIÈRES
+       Pour ajouter une matière : copier une .subject-card et changer onclick="openSubject('CLEF')"
+       La clef doit correspondre à une entrée dans DATA ci-dessous.
+  ══════════════════════════════════ -->
+  <div class="screen active" id="screen-menu">
+    <div class="menu-title">
+      <div class="eyebrow">📅 Pendant l'absence du prof</div>
+      <h1>Choisis ta matière</h1>
+      <p>Sélectionne une matière pour découvrir les thèmes du jour !</p>
+    </div>
+
+    <!-- Zone scrollable — s'adapte automatiquement au nombre de matières -->
+    <div class="menu-scroll" id="menu-scroll">
+      <div class="subject-grid">
+
+        <!-- MATIÈRE : MATHS -->
+        <div class="subject-card" style="--color:#f7971e;--d:0.1s" onclick="openSubject('maths')">
+          <div class="subject-icon" style="--color:#f7971e">🔢</div>
+          <div class="subject-info"><h2>Maths</h2><p id="sub-count-maths"></p></div>
+          <span class="subject-arrow">›</span>
+        </div>
+
+        <!-- MATIÈRE : FRANÇAIS -->
+        <div class="subject-card" style="--color:#56ccf2;--d:0.2s" onclick="openSubject('francais')">
+          <div class="subject-icon" style="--color:#56ccf2">📖</div>
+          <div class="subject-info"><h2>Français</h2><p id="sub-count-francais"></p></div>
+          <span class="subject-arrow">›</span>
+        </div>
+
+        <!-- MATIÈRE : CULTURE -->
+        <div class="subject-card" style="--color:#6fcf97;--d:0.3s" onclick="openSubject('culture')">
+          <div class="subject-icon" style="--color:#6fcf97">🌍</div>
+          <div class="subject-info"><h2>Culture générale</h2><p id="sub-count-culture"></p></div>
+          <span class="subject-arrow">›</span>
+        </div>
+
+        <!-- MATIÈRE : LOGIQUE -->
+        <div class="subject-card" style="--color:#bb6bd9;--d:0.4s" onclick="openSubject('logique')">
+          <div class="subject-icon" style="--color:#bb6bd9">🧩</div>
+          <div class="subject-info"><h2>Logique</h2><p id="sub-count-logique"></p></div>
+          <span class="subject-arrow">›</span>
+        </div>
+
+        <!-- MATIÈRE : ALLEMAND -->
+        <div class="subject-card" style="--color:#FF6B6B;--d:0.5s" onclick="openSubject('allemand')">
+          <div class="subject-icon" style="--color:#FF6B6B">🇩🇪</div>
+          <div class="subject-info"><h2>Allemand</h2><p id="sub-count-allemand"></p></div>
+          <span class="subject-arrow">›</span>
+        </div>
+
+        <!-- 
+          AJOUTER UNE MATIÈRE ICI — modèle :
+          <div class="subject-card" style="- -color:#COLOR;- -d:0.6s" onclick="openSubject('CLEF')">
+            <div class="subject-icon" style="- -color:#COLOR">EMOJI</div>
+            <div class="subject-info"><h2>NOM</h2><p id="sub-count-CLEF"></p></div>
+            <span class="subject-arrow">›</span>
+          </div>
+        -->
+
+      </div>
+    </div>
+
+    <!-- Dégradé indicateur de scroll (disparaît quand on est en bas) -->
+    <div class="menu-fade-bottom" id="menu-fade-bottom"></div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SCREEN 2 — CHOIX DU THÈME
+  ══════════════════════════════════ -->
+  <div class="screen" id="screen-themes">
+    <div class="themes-shell">
+      <div class="themes-topbar">
+        <button class="back-btn" onclick="goTo('themes','menu')">← Matières</button>
+        <div class="topbar-divider"></div>
+        <span id="themes-subject-label" style="font-family:'Baloo 2',cursive;font-weight:800;font-size:1rem;color:var(--active-color)"></span>
+      </div>
+      <div class="themes-body">
+        <div class="themes-header">
+          <h2 id="themes-title"></h2>
+          <p id="themes-subtitle"></p>
+        </div>
+        <div class="themes-grid" id="themes-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SCREEN 3 — SLIDES
+  ══════════════════════════════════ -->
+  <div class="screen" id="screen-slides">
+    <div class="slide-shell">
+      <div class="slide-topbar">
+        <button class="back-btn" onclick="goTo('slides','themes')">← Thèmes</button>
+        <div class="topbar-divider"></div>
+        <div class="topbar-breadcrumb">
+          <span class="bc-subject" id="bc-subject"></span>
+          <span class="bc-sep">›</span>
+          <span class="bc-theme" id="bc-theme"></span>
+        </div>
+        <span class="slide-counter" id="slide-counter"></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="slide-viewport" id="slide-viewport"></div>
+      <div class="slide-nav">
+        <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">‹</button>
+        <div class="nav-dots" id="nav-dots"></div>
+        <button class="nav-btn" id="btn-next" onclick="changeSlide(1)">›</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ██████╗  █████╗ ████████╗ █████╗
+   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
+   ██║  ██║███████║   ██║   ███████║
+   ██║  ██║██╔══██║   ██║   ██╔══██║
+   ██████╔╝██║  ██║   ██║   ██║  ██║
+   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+
+   Modifie uniquement ce bloc pour personnaliser le contenu.
+   Structure : DATA[matière][thème][jeu]
+═══════════════════════════════════════════════════════════════ */
+const DATA = {
+
+  /* ── MATIÈRE : MATHS ─────────────────────────────── */
+  maths: {
+    label: '🔢 Maths',
+    color: '#f7971e',
+    themes: [
+      {
+        id: 'calcul',
+        emoji: '🎯',
+        label: 'Calcul mental',
+        desc: 'Opérations & rapidité',
+        games: [
+          {
+            emoji: '🎯', name: 'Mathador',
+            category: 'Calcul mental',
+            desc: 'Utilise les 4 opérations pour atteindre un nombre cible. Un vrai classique pour les champions du calcul ! Idéal en solo ou en défi avec un camarade.',
+            chips: ['Calcul mental', 'Solo / Duo', 'Tous niveaux'],
+            url: 'https://mathador.fr'
+          },
+          {
+            emoji: '⚡', name: 'Numix',
+            category: 'Rapidité',
+            desc: 'Des opérations à résoudre contre la montre. Plus tu es rapide, plus tu marques de points. Attention, ça va vite !',
+            chips: ['Rapidité', 'Solo', 'Interactif'],
+            url: 'https://www.numix.fr'
+          }
+        ]
+      },
+      {
+        id: 'geometrie',
+        emoji: '📐',
+        label: 'Géométrie',
+        desc: 'Formes & constructions',
+        games: [
+          {
+            emoji: '📐', name: 'GeoGebra',
+            category: 'Géométrie interactive',
+            desc: 'Explore la géométrie en construisant des figures, des courbes et des solides. Un outil puissant et ludique à la fois !',
+            chips: ['Géométrie', 'Algèbre', 'Gratuit'],
+            url: 'https://www.geogebra.org/geometry'
+          }
+        ]
+      }
+    ]
+  },
+
+  /* ── MATIÈRE : FRANÇAIS ──────────────────────────── */
+  francais: {
+    label: '📖 Français',
+    color: '#56ccf2',
+    themes: [
+      {
+        id: 'vocabulaire',
+        emoji: '🔤',
+        label: 'Vocabulaire',
+        desc: 'Enrichis ton lexique',
+        games: [
+          {
+            emoji: '🔤', name: 'Sutom (Wordle FR)',
+            category: 'Vocabulaire',
+            desc: 'Trouve le mot mystère du jour en 6 tentatives. À chaque essai, les lettres se colorent pour t\'aider. Un casse-tête addictif !',
+            chips: ['Vocabulaire', 'Solo', 'Un mot par jour'],
+            url: 'https://sutom.nocle.fr'
+          }
+        ]
+      },
+      {
+        id: 'orthographe',
+        emoji: '📝',
+        label: 'Orthographe',
+        desc: 'Dictées & règles',
+        games: [
+          {
+            emoji: '📝', name: 'Dictée du jour',
+            category: 'Orthographe',
+            desc: 'Entraîne-toi avec une dictée interactive. Tu peux réécouter les phrases autant de fois que tu veux. Parfait pour progresser sans stress !',
+            chips: ['Orthographe', 'Solo', 'Audio'],
+            url: 'https://www.orthodidacte.com/exercice/dictee/'
+          }
+        ]
+      }
+    ]
+  },
+
+  /* ── MATIÈRE : CULTURE GÉNÉRALE ──────────────────── */
+  culture: {
+    label: '🌍 Culture générale',
+    color: '#6fcf97',
+    themes: [
+      {
+        id: 'geo',
+        emoji: '🗺️',
+        label: 'Géographie',
+        desc: 'Pays, capitales & cartes',
+        games: [
+          {
+            emoji: '🗺️', name: 'Seterra',
+            category: 'Géographie',
+            desc: 'Apprends les pays, capitales, fleuves et drapeaux du monde entier avec des quiz rapides et visuels.',
+            chips: ['Géographie', 'Quiz', 'Monde entier'],
+            url: 'https://www.seterra.com/fr/'
+          }
+        ]
+      },
+      {
+        id: 'quiz',
+        emoji: '❓',
+        label: 'Quiz culture',
+        desc: 'Histoire, sciences & arts',
+        games: [
+          {
+            emoji: '❓', name: 'Quizz.biz',
+            category: 'Culture générale',
+            desc: 'Des centaines de questions sur l\'histoire, les sciences et les arts. Joue seul ou défie tes camarades !',
+            chips: ['Histoire', 'Sciences', 'Multi-thèmes'],
+            url: 'https://www.quizz.biz/quizz-100.html'
+          }
+        ]
+      }
+    ]
+  },
+
+  /* ── MATIÈRE : LOGIQUE ───────────────────────────── */
+  logique: {
+    label: '🧩 Logique',
+    color: '#bb6bd9',
+    themes: [
+      {
+        id: 'strategie',
+        emoji: '♟️',
+        label: 'Stratégie',
+        desc: 'Réfléchis et planifie',
+        games: [
+          {
+            emoji: '♟️', name: 'Chess.com',
+            category: 'Stratégie',
+            desc: 'Joue aux échecs contre l\'ordinateur à ton niveau. Développe ta concentration, ta stratégie et ta patience.',
+            chips: ['Stratégie', 'Solo / Multi', 'Tous niveaux'],
+            url: 'https://www.chess.com/fr/play/computer'
+          }
+        ]
+      },
+      {
+        id: 'reflexion',
+        emoji: '🔲',
+        label: 'Réflexion',
+        desc: 'Puzzles & casse-têtes',
+        games: [
+          {
+            emoji: '🔲', name: '2048',
+            category: 'Réflexion',
+            desc: 'Fusionne des tuiles pour atteindre le chiffre 2048. Simple à comprendre, difficile à maîtriser. Combien de tours tiendras-tu ?',
+            chips: ['Réflexion', 'Solo', 'Addictif'],
+            url: 'https://play2048.co'
+          }
+        ]
+      }
+    ]
   }
+
+  /*
+    MODÈLE POUR AJOUTER UNE NOUVELLE MATIÈRE — voir structure ci-dessus
+    ─────────────────────────────────────────────────────
+  */
+
+  ,
+
+  /* ── MATIÈRE : ALLEMAND ──────────────────────────── */
+  allemand: {
+    label: '🇩🇪 Allemand',
+    color: '#FF6B6B',
+    themes: [
+      {
+        id: 'ecole',
+        emoji: '🏫',
+        label: 'École',
+        desc: 'Vocabulaire de la vie scolaire',
+        games: [
+          {
+            emoji: '🗓️', name: 'L\'emploi du temps',
+            category: 'Der Stundenplan',
+            desc: 'Apprends le vocabulaire des matières et de l\'emploi du temps en allemand. Un Kahoot pour tester tes connaissances !',
+            chips: ['Kahoot', 'Vocabulaire', 'Emploi du temps'],
+            url: 'https://create.kahoot.it/share/der-stundenplan/6ef13017-9576-40bd-b66d-482d873f15fa'
+          },
+          {
+            emoji: '🎒', name: 'Les affaires scolaires',
+            category: 'Das Schulmaterial',
+            desc: 'Quiz sur le vocabulaire du cartable et des affaires de classe. Sais-tu dire "cahier" ou "règle" en allemand ?',
+            chips: ['Kahoot', 'Vocabulaire', 'Affaires'],
+            url: 'https://create.kahoot.it/share/les-affaires-scolaires-en-allemand/9c27db85-f4d2-40af-b137-48a7142e0d25'
+          },
+          {
+            emoji: '✏️', name: 'Le matériel scolaire',
+            category: 'Das Schulmaterial',
+            desc: 'Entraîne-toi sur le matériel scolaire en allemand avec des exercices interactifs sur LearningApps.',
+            chips: ['LearningApps', 'Interactif', 'Matériel'],
+            url: 'https://learningapps.org/user/User15347439'
+          },
+          {
+            emoji: '🏫', name: 'L\'école en Allemagne',
+            category: 'Die Schule',
+            desc: 'Découvre comment fonctionne le système scolaire allemand et teste tes connaissances avec ce Kahoot !',
+            chips: ['Kahoot', 'Culture', 'Système scolaire'],
+            url: 'https://create.kahoot.it/share/lecole-en-allemagne/d5cacc4b-fb83-4b04-805e-a0eb79719ec2'
+          }
+        ]
+      },
+      {
+        id: 'semaine-speciale',
+        emoji: '📅',
+        label: 'Jour / Semaine spéciale',
+        desc: 'Événements et célébrations',
+        games: [
+          {
+            emoji: '🎭', name: 'Le carnaval',
+            category: 'Karneval',
+            desc: 'Le carnaval est une fête très importante en Allemagne ! Teste tes connaissances sur le Karneval avec ce quiz Kahoot.',
+            chips: ['Kahoot', 'Culture', 'Fêtes'],
+            url: 'https://create.kahoot.it/share/karneval/70b065ac-45fb-4693-812c-1b8d3a71e48d'
+          },
+          {
+            emoji: '🤝', name: 'La journée franco-allemande',
+            category: 'Deutsch-Französischer Tag',
+            desc: 'Le 22 janvier, on célèbre l\'amitié franco-allemande ! Découvre et teste tes connaissances sur cette journée spéciale.',
+            chips: ['Kahoot', 'Culture', 'Franco-allemand'],
+            url: 'https://create.kahoot.it/share/la-journee-franco-allemande/b23a3470-6641-4ac9-bccf-6e4e9d15b69f'
+          }
+        ]
+      },
+      {
+        id: 'general',
+        emoji: '🌍',
+        label: 'Général',
+        desc: 'Vocabulaire général du quotidien',
+        games: [
+          {
+            emoji: '🕐', name: 'L\'heure en allemand',
+            category: 'Die Uhr',
+            desc: 'Sais-tu dire quelle heure il est en allemand ? Entraîne-toi avec ce Kahoot sur les heures !',
+            chips: ['Kahoot', 'L\'heure', 'Quotidien'],
+            url: 'https://create.kahoot.it/share/uhr-auf-deutsch/5770e7c4-15c9-42f1-9fb6-e693c3d7b687'
+          },
+          {
+            emoji: '🐾', name: 'Les animaux',
+            category: 'Die Tiere',
+            desc: 'Chat, chien, cheval... Comment dit-on en allemand ? Teste tes connaissances sur le vocabulaire des animaux !',
+            chips: ['Kahoot', 'Animaux', 'Vocabulaire'],
+            url: 'https://create.kahoot.it/share/die-tiere/36821bbb-c16e-48ec-84ab-1b4244d7e133'
+          },
+          {
+            emoji: '🎨', name: 'Les couleurs',
+            category: 'Die Farben',
+            desc: 'Rouge, bleu, vert... Connais-tu les couleurs en allemand ? Un Kahoot coloré pour réviser les Farben !',
+            chips: ['Kahoot', 'Couleurs', 'Vocabulaire'],
+            url: 'https://create.kahoot.it/share/farbe-auf-deutsch/6dc63059-a322-4bda-b8fe-bade35dd03ac'
+          }
+        ]
+      }
+    ]
+  }
+};
+/* ════════════════════════════════════════════════════════════ */
+
+/* ── STATE ── */
+let currentSubject = null;
+let currentTheme   = null;
+let currentSlide   = 0;
+let slides         = [];
+
+/* ── INIT : remplir les sous-titres de comptage + scroll fade ── */
+document.addEventListener('DOMContentLoaded', () => {
+  Object.entries(DATA).forEach(([key, sub]) => {
+    const el = document.getElementById('sub-count-' + key);
+    if (el) {
+      const total = sub.themes.reduce((s, t) => s + t.games.length, 0);
+      el.textContent = `${sub.themes.length} thème${sub.themes.length > 1 ? 's' : ''} · ${total} jeu${total > 1 ? 'x' : ''}`;
+    }
+  });
+
+  // Gérer le dégradé indicateur de scroll
+  const scroll = document.getElementById('menu-scroll');
+  const fade   = document.getElementById('menu-fade-bottom');
+  if (scroll && fade) {
+    function updateFade() {
+      const atBottom = scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 8;
+      fade.classList.toggle('hidden', atBottom);
+    }
+    scroll.addEventListener('scroll', updateFade);
+    // Vérifier au démarrage (si tout tient sur l'écran, cacher le dégradé)
+    setTimeout(updateFade, 100);
+  }
+});
+
+/* ── NAVIGATION ── */
+function openSubject(key) {
+  currentSubject = key;
+  const s = DATA[key];
+  document.documentElement.style.setProperty('--active-color', s.color);
+  document.getElementById('themes-subject-label').textContent = s.label;
+  document.getElementById('themes-title').textContent = 'Choisis un thème';
+  document.getElementById('themes-subtitle').textContent = `${s.themes.length} thème${s.themes.length > 1 ? 's' : ''} disponible${s.themes.length > 1 ? 's' : ''} en ${s.label.replace(/^[^\s]+\s/, '')}`;
+
+  const grid = document.getElementById('themes-grid');
+  grid.innerHTML = '';
+  s.themes.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    card.style.setProperty('--td', (i * 0.08) + 's');
+    card.onclick = () => openTheme(t);
+    card.innerHTML = `
+      <div class="t-emoji">${t.emoji}</div>
+      <h3>${t.label}</h3>
+      <p>${t.desc}</p>
+      <span class="t-count">${t.games.length} jeu${t.games.length > 1 ? 'x' : ''}</span>`;
+    grid.appendChild(card);
+  });
+
+  goTo('menu', 'themes');
 }
 
-requestAnimationFrame ( tick ) ;
+function openTheme(theme) {
+  currentTheme = theme;
+  currentSlide = 0;
+  const s = DATA[currentSubject];
+
+  document.getElementById('bc-subject').textContent = s.label;
+  document.getElementById('bc-theme').textContent   = theme.label;
+
+  // Build slides: intro + one per game
+  slides = [{ type: 'intro', emoji: theme.emoji, title: theme.label, desc: theme.desc }];
+  theme.games.forEach((g, i) => slides.push({ type: 'game', data: g, index: i + 1, total: theme.games.length }));
+
+  renderSlides();
+  goTo('themes', 'slides');
 }
 
-function onLoadComplete ( ) {
-  clearInterval ( tipInterval ) ;
-  setTip ( "✅ Tout est prêt ! Bonne séance de jeux 🎉" ) ;
-  setTimeout ( ( ) => {
-    pressEl . classList . add ( 'show' ) ;
-    ready = true ;
-  } , 600 ) ;
+function goTo(from, to, dir) {
+  const fromEl = document.getElementById('screen-' + from);
+  const toEl   = document.getElementById('screen-' + to);
+  const goingForward = (dir === undefined) ? (to !== 'menu' && to !== 'themes' && from !== 'slides') : dir === 'fwd';
+
+  // Determine direction
+  const order = ['menu', 'themes', 'slides'];
+  const isForward = order.indexOf(to) > order.indexOf(from);
+
+  fromEl.classList.remove('active');
+  fromEl.classList.add(isForward ? 'exit-left' : 'exit-right');
+  setTimeout(() => fromEl.classList.remove('exit-left', 'exit-right'), 500);
+  toEl.classList.add('active');
 }
 
-// Start loading after a tiny delay (let DOM paint first)
-setTimeout ( runStep , 200 ) ;
+/* ── SLIDES ── */
+function renderSlides() {
+  const viewport = document.getElementById('slide-viewport');
+  viewport.innerHTML = '';
+  slides.forEach((sl, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide' + (i === 0 ? ' active' : '');
+    div.id = 'slide-' + i;
 
-// Dismiss on click or key
-screen . addEventListener ( 'click' , dismiss ) ;
-document . addEventListener ( 'keydown' , e => {
-  if ( e . key !== 'F5' && e . key !== 'F12' )
-    dismiss ( ) ;
-} ) ;
+    if (sl.type === 'intro') {
+      div.classList.add('slide-intro');
+      div.innerHTML = `
+        <div class="big-emoji">${sl.emoji}</div>
+        <h2>${sl.title}</h2>
+        <p class="intro-desc">${sl.desc}</p>
+        <button class="start-btn" onclick="changeSlide(1)">Voir les jeux →</button>`;
+    } else {
+      const g = sl.data;
+      div.classList.add('slide-game');
+      div.innerHTML = `
+        <div class="game-header">
+          <div class="game-icon-big">${g.emoji}</div>
+          <div class="game-header-info">
+            <div class="game-category">Jeu ${sl.index} sur ${sl.total}</div>
+            <h3>${g.name}</h3>
+          </div>
+        </div>
+        <div class="game-desc-box">${g.desc}</div>
+        <div class="game-chips">${g.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
+        <a class="play-btn" href="${g.url}" target="_blank">🎮 Jouer maintenant</a>`;
+    }
+    viewport.appendChild(div);
+  });
+  updateNav();
+}
 
-} ) ( ) ;
+function changeSlide(dir) {
+  const prev = currentSlide;
+  currentSlide = Math.max(0, Math.min(slides.length - 1, currentSlide + dir));
+  if (prev === currentSlide) return;
+  const prevEl = document.getElementById('slide-' + prev);
+  const nextEl = document.getElementById('slide-' + currentSlide);
+  prevEl.classList.remove('active');
+  if (dir > 0) prevEl.classList.add('prev');
+  setTimeout(() => prevEl.classList.remove('prev'), 450);
+  nextEl.style.transform = dir > 0 ? 'translateX(80px)' : 'translateX(-80px)';
+  nextEl.style.opacity = '0';
+  nextEl.offsetHeight;
+  nextEl.style.transform = '';
+  nextEl.style.opacity = '';
+  nextEl.classList.add('active');
+  updateNav();
+}
 
-</ script >
-</ body >
-</ html >
+function updateNav() {
+  const total = slides.length;
+  document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${total}`;
+  document.getElementById('btn-prev').disabled = currentSlide === 0;
+  document.getElementById('btn-next').disabled = currentSlide === total - 1;
+  document.getElementById('progress-fill').style.width = ((currentSlide + 1) / total * 100) + '%';
+  const dotsEl = document.getElementById('nav-dots');
+  dotsEl.innerHTML = '';
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === currentSlide ? ' active' : '');
+    d.onclick = () => { const dir = i > currentSlide ? 1 : -1; while (currentSlide !== i) changeSlide(dir); };
+    dotsEl.appendChild(d);
+  });
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e => {
+  const slides_active = document.getElementById('screen-slides').classList.contains('active');
+  const themes_active = document.getElementById('screen-themes').classList.contains('active');
+  if (slides_active) {
+    if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowLeft')  changeSlide(-1);
+    if (e.key === 'Escape')     goTo('slides', 'themes');
+  } else if (themes_active && e.key === 'Escape') {
+    goTo('themes', 'menu');
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════════════════════════ */
+(function() {
+  const TIPS = [
+    "🧠 Jouer en apprenant, c'est retenir deux fois plus vite !",
+    "🎯 Le calcul mental améliore la concentration sur toutes les matières.",
+    "🌍 Connaître la géographie, c'est mieux comprendre l'actualité.",
+    "♟️ Les échecs développent la patience et la stratégie dans la vie réelle.",
+    "📖 Lire et jouer avec les mots enrichit le vocabulaire sans effort.",
+    "🔢 Les maths sont partout : dans la musique, l'architecture et la cuisine !",
+    "🎮 Les jeux éducatifs activent les mêmes zones du cerveau que le vrai apprentissage.",
+    "🏆 La régularité est plus efficace que l'intensité pour progresser.",
+    "🧩 Résoudre des puzzles améliore la pensée logique et créative.",
+    "💡 Faire des erreurs en jouant, c'est apprendre sans le stress de la note.",
+  ];
+
+  const bar     = document.getElementById('load-bar');
+  const pct     = document.getElementById('load-pct');
+  const tipEl   = document.getElementById('load-tip');
+  const pressEl = document.getElementById('load-press');
+  const screen  = document.getElementById('loading-screen');
+
+  let progress  = 0;
+  let tipIndex  = 0;
+  let ready     = false;
+  let dismissed = false;
+
+  // Shuffle tips
+  const tips = [...TIPS].sort(() => Math.random() - 0.5);
+
+  function setTip(text) {
+    tipEl.classList.add('fade');
+    setTimeout(() => {
+      tipEl.textContent = text;
+      tipEl.classList.remove('fade');
+    }, 400);
+  }
+
+  function dismiss() {
+    if (!ready || dismissed) return;
+    dismissed = true;
+    screen.classList.add('hide');
+    setTimeout(() => screen.remove(), 750);
+  }
+
+  // Show first tip immediately
+  tipEl.textContent = tips[0];
+
+  // Rotate tips every 2.8s
+  const tipInterval = setInterval(() => {
+    tipIndex = (tipIndex + 1) % tips.length;
+    setTip(tips[tipIndex]);
+  }, 2800);
+
+  // Simulate loading progress — fast at first, then slows near 100%
+  // Mimics GTA / Brawl Stars feel
+  const steps = [
+    { target: 30,  duration: 400  },
+    { target: 55,  duration: 600  },
+    { target: 72,  duration: 500  },
+    { target: 88,  duration: 700  },
+    { target: 95,  duration: 800  },
+    { target: 100, duration: 500  },
+  ];
+
+  let stepIndex = 0;
+
+  function runStep() {
+    if (stepIndex >= steps.length) return;
+    const step = steps[stepIndex++];
+    const start    = progress;
+    const end      = step.target;
+    const dur      = step.duration;
+    const t0       = performance.now();
+
+    function tick(now) {
+      const elapsed = now - t0;
+      const frac    = Math.min(elapsed / dur, 1);
+      // ease out
+      const eased   = 1 - Math.pow(1 - frac, 3);
+      progress      = start + (end - start) * eased;
+
+      bar.style.width = progress + '%';
+      pct.textContent = Math.round(progress) + '%';
+
+      if (frac < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        progress = end;
+        if (stepIndex < steps.length) {
+          // small pause between steps
+          setTimeout(runStep, 80 + Math.random() * 120);
+        } else {
+          // Done !
+          onLoadComplete();
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function onLoadComplete() {
+    clearInterval(tipInterval);
+    setTip("✅ Tout est prêt ! Bonne séance de jeux 🎉");
+    setTimeout(() => {
+      pressEl.classList.add('show');
+      ready = true;
+    }, 600);
+  }
+
+  // Start loading after a tiny delay (let DOM paint first)
+  setTimeout(runStep, 200);
+
+  // Dismiss on click or key
+  screen.addEventListener('click', dismiss);
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'F5' && e.key !== 'F12') dismiss();
+  });
+})();
+</script>
+</body>
+</html>
